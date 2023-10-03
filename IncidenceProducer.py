@@ -18,10 +18,10 @@ class IncidenceProducer:
 
     def dotbracket_connections(self):
         stack = deque()
-        for i in range(len(self.molecule["dotbracket"])):
-            if self.molecule["dotbracket"][i] == "(":
+        for i, value in enumerate(self.molecule["dotbracket"]):
+            if value == "(":
                 stack.append(i)
-            elif self.molecule["dotbracket"][i] == ")":
+            elif value == ")":
                 if len(stack) == 0:
                     raise (ValueError("Closing bracket not matching"))
 
@@ -33,7 +33,9 @@ class IncidenceProducer:
     def structure_connections(self, structures):
         struct_counter = defaultdict(int)
         for struct in structures:
-            self.incidence_dict[f"{struct[0]}_{struct_counter[struct[0]]}"].extend(
+            nucleotide = f"{struct[0]}_{struct_counter[struct[0]]}"  # {structure name letter}_{number of structure}
+            # nelle strutture i nucleotidi sono numerati da 1 a n, in alcuni casi con 0 e n+1 che vengono scartati
+            self.incidence_dict[nucleotide].extend(
                 [i - 1 for i in struct[2] if 0 < i <= len(self.molecule["seq"])]
             )
             struct_counter[struct[0]] += 1
