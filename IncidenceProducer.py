@@ -7,20 +7,20 @@ class IncidenceProducer:
     """Produce un dizionario di incidenza che rappresenta una sequenza di RNA come ipergrafo dato un file json di
     forna"""
 
-    def __init__(self, forna_file_path: str):
+    def __init__(self, forna_file_path: str) -> None:
         with open(forna_file_path, "r") as json_file:
             _, self.molecule = json.load(json_file)["rnas"].popitem()
-        self.incidence_dict = defaultdict(list)
-        self.edge = 0
+        self.incidence_dict: defaultdict = defaultdict(list)
+        self.edge: int = 0
 
-    def connect_to_next(self):
+    def connect_to_next(self) -> None:
         """Collega ogni nucleotide con il suo successivo"""
         for i in range(len(self.molecule["dotbracket"]) - 1):
             self.incidence_dict[f"l_{self.edge}"].append(i)
             self.incidence_dict[f"l_{self.edge}"].append(i + 1)
             self.edge += 1
 
-    def dotbracket_connections(self):
+    def dotbracket_connections(self) -> None:
         """Collega i nucleotidi in base alla rappresentazione punto-parentesi"""
         stack = deque()
         for i, value in enumerate(self.molecule["dotbracket"]):
@@ -35,7 +35,7 @@ class IncidenceProducer:
                 self.incidence_dict[f"l_{self.edge}"].append(i)
                 self.edge += 1
 
-    def structure_connections(self, structures):
+    def structure_connections(self, structures: list) -> None:
         """Collega le strutture rilevate da forna"""
         struct_counter = defaultdict(int)
         for struct in structures:
@@ -46,15 +46,18 @@ class IncidenceProducer:
             )
             struct_counter[struct[0]] += 1
 
-    def nodes_to_nucleotide_string(self):
+    def nodes_to_nucleotide_string(self) -> None:
         """Converte i nomi dei nodi nel formato "{indice}_{nucleotide corrispettivo}\" """
         for key in self.incidence_dict.keys():
             self.incidence_dict[key] = [
                 f"{i}_{self.molecule['seq'][i]}" for i in self.incidence_dict[key]
             ]
 
-    def get_incidence_dict(self):
-        """Restituisce il dizionario di incidenza"""
+    def get_incidence_dict(self) -> dict:
+        """
+        Restituisce il dizionario di incidenza
+        :return: il dizionario di incidenza
+        """
         self.connect_to_next()
         self.dotbracket_connections()
         structures = self.molecule["elements"]
