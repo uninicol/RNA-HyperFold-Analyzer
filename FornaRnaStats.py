@@ -13,8 +13,8 @@ class FornaRnaStats(RnaStats):
         incidence_dict = FornaIncidenceProducer(forna_file_path).get_incidence_dict()
         self.H = hnx.Hypergraph(incidence_dict)
         del incidence_dict
-        self.__partitions: list = None
-        self.__precomputed_H: list[set] = None
+        self.__partitions: list = []
+        self.__precomputed_H: list[set] = []
 
     def plot_hypergraph(self, size: tuple = (40, 40)) -> None:
         """Disegna un grafico che rappresenta l'ipergrafo costruito"""
@@ -24,9 +24,9 @@ class FornaRnaStats(RnaStats):
 
     def partitions(self) -> list:
         """Computa delle partizioni dell'ipergrafo"""
-        if self.__precomputed_H is None:
+        if len(self.__precomputed_H) == 0:
             self.__precomputed_H = hmod.precompute_attributes(self.H)
-        if self.__partitions is None:
+        if len(self.__partitions) == 0:
             self.__partitions = hmod.kumar(self.__precomputed_H)
         return self.__partitions
 
