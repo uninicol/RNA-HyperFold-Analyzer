@@ -12,7 +12,11 @@ class FornaIncidenceProducer(IncidenceProducer, Connector):
 
     def __init__(self, forna_file_path: str) -> None:
         with open(forna_file_path, "r") as json_file:
-            _, self.molecule = json.load(json_file)["rnas"].popitem()
+            self.molecule = json.load(json_file)["rnas"]
+            if len(self.molecule.keys()) > 1:
+                print("Warning: solo la prima sequenza verrà considerata")
+
+        self.molecule = self.molecule[next(iter(self.molecule))]
         self.incidence_dict: defaultdict = defaultdict(list)
         self.edge: int = 0
 
