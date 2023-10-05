@@ -15,9 +15,6 @@ class Connector(ABC):
         pass
 
     @abstractmethod
-    def structure_connections(self, structures: list) -> None:
-        """
-        Collega le strutture con un iperarco
-        :param structures: le strutture da collegare
-        """
+    def structure_connections(self) -> None:
+        """Collega le strutture con un iperarco"""
         pass

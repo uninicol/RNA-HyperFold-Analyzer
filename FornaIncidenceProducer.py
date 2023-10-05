@@ -23,8 +23,7 @@ class FornaIncidenceProducer(IncidenceProducer, Connector):
         """
         self.connect_to_next()
         self.dotbracket_connections()
-        structures = self.molecule["elements"]
-        self.structure_connections(structures)
+        self.structure_connections()
         if node_with_nucleotide:
             self.nodes_to_nucleotide_string()
         return self.incidence_dict
@@ -51,10 +50,10 @@ class FornaIncidenceProducer(IncidenceProducer, Connector):
                 self.incidence_dict[f"l_{self.edge}"].append(i)
                 self.edge += 1
 
-    def structure_connections(self, structures: list) -> None:
+    def structure_connections(self) -> None:
         """Collega le strutture rilevate da forna"""
         struct_counter = defaultdict(int)
-        for struct in structures:
+        for struct in self.molecule["elements"]:
             nucleotide = f"{struct[0]}_{struct_counter[struct[0]]}"  # {structure name letter}_{number of structure}
             # nelle strutture i nucleotidi sono numerati da 1 a n, in alcuni casi con 0 e n+1 che vengono scartati
             self.incidence_dict[nucleotide].extend(
