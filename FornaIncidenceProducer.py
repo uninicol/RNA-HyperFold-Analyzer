@@ -16,7 +16,7 @@ class FornaIncidenceProducer(IncidenceProducer, Connector):
         self.incidence_dict: defaultdict = defaultdict(list)
         self.edge: int = 0
 
-    def get_incidence_dict(self) -> dict:
+    def get_incidence_dict(self, node_with_nucleotide: bool = False) -> dict:
         """
         Restituisce il dizionario di incidenza
         :return: il dizionario di incidenza
@@ -25,7 +25,8 @@ class FornaIncidenceProducer(IncidenceProducer, Connector):
         self.dotbracket_connections()
         structures = self.molecule["elements"]
         self.structure_connections(structures)
-        self.nodes_to_nucleotide_string()
+        if node_with_nucleotide:
+            self.nodes_to_nucleotide_string()
         return self.incidence_dict
 
     def connect_to_next(self) -> None:
