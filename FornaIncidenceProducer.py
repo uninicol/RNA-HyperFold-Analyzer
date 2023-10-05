@@ -2,10 +2,11 @@ import json
 from collections import defaultdict
 from collections import deque
 
+from Connector import Connector
 from IncidenceProducer import IncidenceProducer
 
 
-class FornaIncidenceProducer(IncidenceProducer):
+class FornaIncidenceProducer(IncidenceProducer, Connector):
     """Produce un dizionario di incidenza che rappresenta una sequenza di RNA come ipergrafo dato un file json di
     forna"""
 
@@ -14,6 +15,18 @@ class FornaIncidenceProducer(IncidenceProducer):
             _, self.molecule = json.load(json_file)["rnas"].popitem()
         self.incidence_dict: defaultdict = defaultdict(list)
         self.edge: int = 0
+
+    def get_incidence_dict(self) -> dict:
+        """
+        Restituisce il dizionario di incidenza
+        :return: il dizionario di incidenza
+        """
+        self.connect_to_next()
+        self.dotbracket_connections()
+        structures = self.molecule["elements"]
+        self.structure_connections(structures)
+        self.nodes_to_nucleotide_string()
+        return self.incidence_dict
 
     def connect_to_next(self) -> None:
         """Collega ogni nucleotide con il suo successivo"""
@@ -54,15 +67,3 @@ class FornaIncidenceProducer(IncidenceProducer):
             self.incidence_dict[key] = [
                 f"{i}_{self.molecule['seq'][i]}" for i in self.incidence_dict[key]
             ]
-
-    def get_incidence_dict(self) -> dict:
-        """
-        Restituisce il dizionario di incidenza
-        :return: il dizionario di incidenza
-        """
-        self.connect_to_next()
-        self.dotbracket_connections()
-        structures = self.molecule["elements"]
-        self.structure_connections(structures)
-        self.nodes_to_nucleotide_string()
-        return self.incidence_dict
