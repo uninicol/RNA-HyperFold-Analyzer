@@ -1,4 +1,4 @@
-import subprocess
+import forgi
 
 from FornaIncidenceProducer import FornaIncidenceProducer
 
@@ -10,11 +10,10 @@ class ForgiIncidenceProducer(FornaIncidenceProducer):
     def structure_connections(self, structures):
         structures = self.get_structures()
         for i in range(len(structures[0])):
-            self.incidence_dict[f"{structures[1][i]}_{structures[2][i]}"].append(i)
+            self.incidence_dict[f"{structures[0][i]}_{structures[1][i]}"].append(i)
 
     def get_structures(self):
-        command = f"python3 forgi/rnaConvert.py {self.molecule['dotbracket']} -T element_string".split()
-        result = subprocess.run(command, stdout=subprocess.PIPE)
-        result = result.stdout.decode("utf-8")
-        result = result.split("\n")
-        return result
+        cg = forgi.load_rna(self.molecule["dotbracket"], allow_many=False)
+        structures = cg.to_element_string(with_numbers=True)
+        structures = structures.split("\n")
+        return structures
