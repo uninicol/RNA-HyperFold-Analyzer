@@ -16,11 +16,13 @@ class FornaRnaStats(RnaStats):
         self.__partitions: list = []
         self.__precomputed_H: list[set] = []
 
-    def plot_hypergraph(self, size: tuple = (40, 40)) -> None:
-        """Disegna un grafico che rappresenta l'ipergrafo costruito"""
-        plt.subplots(figsize=size)
-        hnx.draw(self.H)
-        plt.show()
+    def __get_hyperedges(self, node: int | str) -> list[int | str]:
+        """
+        Restituisce gli iperarchi che contengono il nodo selezionato
+        :param node: il nodo contenuto dagli iperarchi
+        :return: la lista di iperarchi che contengono il nodo selezionato
+        """
+        return [edge for edge in self.H.edges if node in self.H.edges[edge]]
 
     def partitions(self) -> list:
         """Computa delle partizioni dell'ipergrafo"""
@@ -46,14 +48,6 @@ class FornaRnaStats(RnaStats):
         """
         self.partitions()
         return hmod.modularity(self.__precomputed_H, self.__partitions)
-
-    def __get_hyperedges(self, node: int | str) -> list[int | str]:
-        """
-        Restituisce gli iperarchi che contengono il nodo selezionato
-        :param node: il nodo contenuto dagli iperarchi
-        :return: la lista di iperarchi che contengono il nodo selezionato
-        """
-        return [edge for edge in self.H.edges if node in self.H.edges[edge]]
 
     def get_subset_conductance(self, subset: set) -> float:
         """
@@ -82,6 +76,20 @@ class FornaRnaStats(RnaStats):
             [self.get_subset_conductance(subset) for subset in self.partitions()]
         )
 
+    def get_n_between_centrality(self, n: int = 1) -> dict:
+        """
+        Restituisce la n-between-centrality dei nucleotidi
+        :param n: connectedness requirement
+        :return: la n-between-centrality dei nucleotidi
+        """
+        return hnx.algorithms.s_betweenness_centrality(self.H, n)
+
+    def plot_hypergraph(self, size: tuple = (40, 40)) -> None:
+        """Disegna un grafico che rappresenta l'ipergrafo costruito"""
+        plt.subplots(figsize=size)
+        hnx.draw(self.H)
+        plt.show()
+
     def plot_partitions_conductance(self) -> None:
         """Disegna un grafico che rappresenta la conduttanza delle partizioni"""
         cond = self.get_partitions_conductance()
@@ -95,14 +103,6 @@ class FornaRnaStats(RnaStats):
         plt.xlabel("Partition")
         plt.ylabel("Conductance")
         plt.show()
-
-    def get_n_between_centrality(self, n: int = 1) -> dict:
-        """
-        Restituisce la n-between-centrality dei nucleotidi
-        :param n: connectedness requirement
-        :return: la n-between-centrality dei nucleotidi
-        """
-        return hnx.algorithms.s_betweenness_centrality(self.H, n)
 
     def plot_n_between_centrality(self, n: int = 1) -> None:
         """
