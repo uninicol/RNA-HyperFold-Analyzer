@@ -2,7 +2,6 @@ import hypernetx as hnx
 import hypernetx.algorithms.hypergraph_modularity as hmod
 import matplotlib.pyplot as plt
 
-import IncidenceProducer
 from FornaIncidenceProducer import FornaIncidenceProducer
 from RnaStats import RnaStats
 
@@ -14,14 +13,7 @@ class FornaRnaStats(RnaStats):
         super().__init__(producer)
         self.__partitions: list = []
         self.__precomputed_H: list[set] = []
-
-    def __get_hyperedges(self, node: int | str) -> list[int | str]:
-        """
-        Restituisce gli iperarchi che contengono il nodo selezionato
-        :param node: il nodo contenuto dagli iperarchi
-        :return: la lista di iperarchi che contengono il nodo selezionato
-        """
-        return [edge for edge in self.H.edges if node in self.H.edges[edge]]
+        self.dual = None
 
     def partitions(self) -> list:
         """Computa delle partizioni dell'ipergrafo"""
@@ -55,7 +47,7 @@ class FornaRnaStats(RnaStats):
         :return: la conduttanza della partizione
         """
         subset2 = set(self.H.nodes) - subset
-        ws = sum([len(self.__get_hyperedges(node)) for node in subset])
+        ws = sum([self.H.degree(node) for node in subset])
         was = 0
         for edge in self.H.edges:
             he_vertices = set(self.H.edges[edge])
