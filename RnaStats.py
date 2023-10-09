@@ -29,10 +29,10 @@ class RnaStats(ABC):
         pass
 
     @abstractmethod
-    def partitions_conductance(self) -> enumerate[float]:
+    def partitions_conductance(self) -> list[float]:
         """
         Restituisce la conduttanza di tutte le partizioni
-        :return: l'enumerazione contenente la conduttanza di tutte le partizioni
+        :return: la lista contenente la conduttanza di tutte le partizioni
         """
         pass
 

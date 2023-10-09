@@ -46,7 +46,7 @@ class FornaRnaStats(RnaStats):
         :param subset: la partizione
         :return: la conduttanza della partizione
         """
-        subset2 = [n for n in self.H.nodes if n not in subset]#set(self.H.nodes) - subset
+        subset2 = [n for n in self.H.nodes if n not in subset]
         ws = sum((self.H.degree(node) for node in subset))
         was = 0
         for edge in self.H.edges:
@@ -58,14 +58,12 @@ class FornaRnaStats(RnaStats):
             was += len(he_vertices)
         return was / ws
 
-    def partitions_conductance(self) -> enumerate[float]:
+    def partitions_conductance(self) -> list[float]:
         """
         Restituisce la conduttanza di tutte le partizioni
-        :return: l'enumerazione contenente la conduttanza di tutte le partizioni
+        :return: la lista contenente la conduttanza di tutte le partizioni
         """
-        return enumerate(
-            [self.subset_conductance(subset) for subset in self.partitions()]
-        )
+        return [self.subset_conductance(subset) for subset in self.partitions()]
 
     def n_between_centrality(self, n: int = 1) -> dict:
         """
