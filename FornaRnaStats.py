@@ -46,14 +46,14 @@ class FornaRnaStats(RnaStats):
         :param subset: la partizione
         :return: la conduttanza della partizione
         """
-        subset2 = set(self.H.nodes) - subset
-        ws = sum([self.H.degree(node) for node in subset])
+        subset2 = [n for n in self.H.nodes if n not in subset]#set(self.H.nodes) - subset
+        ws = sum((self.H.degree(node) for node in subset))
         was = 0
         for edge in self.H.edges:
-            he_vertices = set(self.H.edges[edge])
-            if len(he_vertices & subset) == 0:
+            he_vertices = self.H.edges[edge]
+            if len([n for n in he_vertices if n in subset]) == 0:
                 continue
-            if len(he_vertices & subset2) == 0:
+            if len([n for n in he_vertices if n in subset2]) == 0:
                 continue
             was += len(he_vertices)
         return was / ws
