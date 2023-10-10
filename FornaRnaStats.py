@@ -13,7 +13,6 @@ class FornaRnaStats(RnaStats):
         super().__init__(producer)
         self.__partitions: list = []
         self.__precomputed_H: list[set] = []
-        self.dual = None
 
     def partitions(self) -> list:
         """Computa delle partizioni dell'ipergrafo"""
