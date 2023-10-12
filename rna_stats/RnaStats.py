@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 import hypernetx as hnx
 
-import IncidenceProducer
+from incidence_producers import IncidenceProducer
 
 
 class RnaStats(ABC):

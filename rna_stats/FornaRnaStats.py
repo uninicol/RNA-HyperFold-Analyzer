@@ -2,8 +2,8 @@ import hypernetx as hnx
 import hypernetx.algorithms.hypergraph_modularity as hmod
 import matplotlib.pyplot as plt
 
-from FornaIncidenceProducer import FornaIncidenceProducer
-from RnaStats import RnaStats
+from incidence_producers.FornaIncidenceProducer import FornaIncidenceProducer
+from rna_stats.RnaStats import RnaStats
 
 
 class FornaRnaStats(RnaStats):
