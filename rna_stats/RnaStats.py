@@ -12,7 +12,14 @@ class RnaStats(ABC):
         pass
 
     @abstractmethod
-    def modularity(self):
+    def secondary_structures(self) -> dict:
+        """
+        Restituisce il dizionario contenente le strutture secondarie rilevate
+        """
+        pass
+
+    @abstractmethod
+    def modularity(self) -> float:
         """
         Restituisce la modularità dell'ipergrafo
         :return: la modularità dell'ipergrafo

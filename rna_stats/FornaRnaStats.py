@@ -2,17 +2,24 @@ import hypernetx as hnx
 import hypernetx.algorithms.hypergraph_modularity as hmod
 import matplotlib.pyplot as plt
 
-from incidence_producers.FornaIncidenceProducer import FornaIncidenceProducer
+from incidence_producers import IncidenceProducer
 from rna_stats.RnaStats import RnaStats
 
 
 class FornaRnaStats(RnaStats):
     """Classe che raccoglie delle statistiche su una sequenza di RNA utilizzando un ipergrafo"""
 
-    def __init__(self, producer: FornaIncidenceProducer) -> None:
+    def __init__(self, producer: IncidenceProducer) -> None:
         super().__init__(producer)
         self.__partitions: list = []
         self.__precomputed_H: list[set] = []
+
+    def secondary_structures(self) -> dict:
+        structures = {}
+        for key, value in self.H.incidence_dict.items():
+            if not key.startswith("l"):
+                structures[key] = value
+        return structures
 
     def partitions(self) -> list:
         """Computa delle partizioni dell'ipergrafo"""
