@@ -90,7 +90,7 @@ class FornaRnaStats(RnaStats):
         cond = self.partitions_conductance()
         seq = []
         values = []
-        for i, c in cond:
+        for i, c in enumerate(cond):
             seq.append(i)
             values.append(c)
         plt.bar(seq, values)
