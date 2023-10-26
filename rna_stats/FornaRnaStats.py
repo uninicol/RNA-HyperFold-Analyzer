@@ -82,7 +82,7 @@ class FornaRnaStats(RnaStats):
     def plot_hypergraph(self, size: tuple = (40, 40)) -> None:
         """Disegna un grafico che rappresenta l'ipergrafo costruito"""
         plt.subplots(figsize=size)
-        hnx.draw(self.H)
+        hnx.draw(self.H, **{'layout_kwargs': {'seed': 39}})
         plt.show()
 
     def plot_partitions_conductance(self) -> None:
