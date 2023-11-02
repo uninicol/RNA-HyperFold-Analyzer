@@ -2,7 +2,6 @@ from collections import defaultdict
 from collections import deque
 
 import forgi
-from ViennaRNA import fold
 
 from incidence_producers.Connector import Connector
 from incidence_producers.IncidenceProducer import IncidenceProducer
@@ -12,13 +11,12 @@ class ViennaIncidenceProducer(IncidenceProducer, Connector):
     """Produce un dizionario di incidenza che rappresenta una sequenza di RNA come ipergrafo dato un file json di
     forna"""
 
-    def __init__(self, rna_seq: str) -> None:
-        self.rna_seq = rna_seq
-        self.rna_dotbracket, _ = fold(rna_seq)
+    def __init__(self, dotbracket: str) -> None:
+        self.dotbracket: str = dotbracket
         self.incidence_dict: defaultdict = defaultdict(list)
         self.edge: int = 0
 
-    def get_incidence_dict(self, node_with_nucleotide: bool = False) -> dict:
+    def get_incidence_dict(self) -> dict:
         """
         Restituisce il dizionario di incidenza
         :return: il dizionario di incidenza
@@ -26,13 +24,11 @@ class ViennaIncidenceProducer(IncidenceProducer, Connector):
         self.connect_to_next()
         self.dotbracket_connections()
         self.structure_connections()
-        if node_with_nucleotide:
-            self.nodes_to_nucleotide_string()
         return self.incidence_dict
 
     def connect_to_next(self) -> None:
         """Collega ogni nucleotide con il suo successivo"""
-        for i in range(len(self.rna_dotbracket) - 1):
+        for i in range(len(self.dotbracket) - 1):
             self.incidence_dict[f"l_{self.edge}"].append(i)
             self.incidence_dict[f"l_{self.edge}"].append(i + 1)
             self.edge += 1
@@ -40,7 +36,7 @@ class ViennaIncidenceProducer(IncidenceProducer, Connector):
     def dotbracket_connections(self) -> None:
         """Collega i nucleotidi in base alla rappresentazione punto-parentesi"""
         stack = deque()
-        for i, value in enumerate(self.rna_dotbracket):
+        for i, value in enumerate(self.dotbracket):
             if value == "(":
                 stack.append(i)
             elif value == ")":
@@ -60,7 +56,7 @@ class ViennaIncidenceProducer(IncidenceProducer, Connector):
 
     def get_structures(self) -> dict:
         structures_dict = defaultdict(list)
-        cg = forgi.load_rna(self.rna_dotbracket, allow_many=False)
+        cg = forgi.load_rna(self.dotbracket, allow_many=False)
         structures = cg.to_element_string(with_numbers=True)
         structures = structures.split("\n")
         for i in range(len(structures[0])):
@@ -74,11 +70,3 @@ class ViennaIncidenceProducer(IncidenceProducer, Connector):
         # for i in range(len(structures[0])):
         #     structures_dict[f"{structures[0][i]}_{structures[1][i]}"].append(i)
         # return structures_dict
-
-
-    def nodes_to_nucleotide_string(self) -> None:
-        """Converte i nomi dei nodi nel formato "{indice}_{nucleotide corrispettivo}\" """
-        for key in self.incidence_dict.keys():
-            self.incidence_dict[key] = [
-                f"{i}_{self.rna_seq[i]}" for i in self.incidence_dict[key]
-            ]
