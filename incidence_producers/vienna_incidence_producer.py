@@ -1,4 +1,3 @@
-from abc import ABC
 from collections import defaultdict
 from collections import deque
 
@@ -17,7 +16,7 @@ class ViennaIncidenceProducer(TemperatureIncidenceProducer, Connector):
         self.folder: RNAFolder = folder
         self.sequence: str = folder.sequence
         self.dotbracket: str = None
-        self.incidence_dict: defaultdict = defaultdict(list)
+        self.incidence_dict: defaultdict = defaultdict(set)
 
 
     def get_temperature_incidence_dict(self, temperature: int) -> dict:
@@ -35,8 +34,7 @@ class ViennaIncidenceProducer(TemperatureIncidenceProducer, Connector):
         """Collega ogni nucleotide con il suo successivo"""
         edge :int= 0
         for i in range(len(self.dotbracket) - 1):
-            self.incidence_dict[f"l_{edge}"].append(i)
-            self.incidence_dict[f"l_{edge}"].append(i + 1)
+            self.incidence_dict[f"l_{edge}"] = {i, i + 1}
             edge += 1
 
     def dotbracket_connections(self) -> None:
@@ -51,8 +49,8 @@ class ViennaIncidenceProducer(TemperatureIncidenceProducer, Connector):
                     raise (ValueError("Closing bracket not matching"))
 
                 start = stack.pop()
-                self.incidence_dict[f"db_{edge}"].append(start)
-                self.incidence_dict[f"db_{edge}"].append(i)
+                self.incidence_dict[f"db_{edge}"] = {start, i}
+                # self.incidence_dict[f"db_{edge}"].append(i)
                 edge += 1
 
     def structure_connections(self):
@@ -62,12 +60,12 @@ class ViennaIncidenceProducer(TemperatureIncidenceProducer, Connector):
             self.incidence_dict[struct] = indexes
 
     def get_structures(self) -> dict:
-        structures_dict = defaultdict(list)
+        structures_dict = defaultdict(set)
         cg = forgi.load_rna(self.dotbracket, allow_many=False)
         structures = cg.to_element_string(with_numbers=True)
         structures = structures.split("\n")
         for i in range(len(structures[0])):
-            structures_dict[f"{structures[0][i]}_{structures[1][i]}"].append(i)
+            structures_dict[f"{structures[0][i]}_{structures[1][i]}"].add(i)
         return structures_dict
         # TODO fare questa operazione con viennarna per non importare forgi
         # structures_dict = defaultdict(list)
