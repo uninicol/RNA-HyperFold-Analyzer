@@ -2,14 +2,14 @@ import hypernetx as hnx
 import hypernetx.algorithms.hypergraph_modularity as hmod
 import matplotlib.pyplot as plt
 
-from incidence_producers import incidence_producer
+from incidence_producers.temperature_incidence_producer import TemperatureIncidenceProducer
 from rna_stats.rna_stats import RnaStats
 
 
 class FornaRnaStats(RnaStats):
     """Classe che raccoglie delle statistiche su una sequenza di RNA utilizzando un ipergrafo"""
 
-    def __init__(self, producer: IncidenceProducer, temperature:int) -> None:
+    def __init__(self, producer: TemperatureIncidenceProducer, temperature: int) -> None:
         super().__init__(producer, temperature)
         self.__partitions: list = []
         self.__precomputed_H: list[set] = []

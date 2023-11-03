@@ -2,11 +2,11 @@ from abc import ABC, abstractmethod
 
 import hypernetx as hnx
 
-from incidence_producers import incidence_producer
+from incidence_producers.temperature_incidence_producer import TemperatureIncidenceProducer
 
 
 class RnaStats(ABC):
-    def __init__(self, producer: IncidenceProducer, temperature: int) -> None:
+    def __init__(self, producer: TemperatureIncidenceProducer, temperature: int) -> None:
         incidence_dict = producer.get_temperature_incidence_dict(temperature)
         self.H = hnx.Hypergraph(incidence_dict)
         del incidence_dict
