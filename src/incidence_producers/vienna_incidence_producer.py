@@ -3,9 +3,9 @@ from collections import deque
 
 import forgi
 
-from incidence_producers.connector import Connector
-from incidence_producers.temperature_incidence_producer import TemperatureIncidenceProducer
-from temp_classes.rna_folder import RNAFolder
+from src.incidence_producers.connector import Connector
+from src.incidence_producers.temperature_incidence_producer import TemperatureIncidenceProducer
+from src.temp_classes.rna_folder import RNAFolder
 
 
 class ViennaIncidenceProducer(TemperatureIncidenceProducer, Connector):

@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 
 import hypernetx as hnx
 
-from incidence_producers.temperature_incidence_producer import TemperatureIncidenceProducer
+from src.incidence_producers.temperature_incidence_producer import TemperatureIncidenceProducer
 
 
 class RnaStats(ABC):

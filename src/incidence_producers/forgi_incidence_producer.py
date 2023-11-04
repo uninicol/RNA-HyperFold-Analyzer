@@ -1,6 +1,6 @@
 import forgi
 
-from incidence_producers.forna_incidence_producer import FornaIncidenceProducer
+from src.incidence_producers.forna_incidence_producer import FornaIncidenceProducer
 
 
 class ForgiIncidenceProducer(FornaIncidenceProducer):
