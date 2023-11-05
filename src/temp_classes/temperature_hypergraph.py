@@ -1,18 +1,13 @@
+import re
+
 import hypernetx as hnx
 
 from src.incidence_producers.temperature_incidence_producer import TemperatureIncidenceProducer
 
 
-def find_unique_lists(dict1, dict2):
-    # Get unique lists in each dictionary
-    unique_lists_dict1 = set(tuple(lst) for lst in dict1.values())
-    unique_lists_dict2 = set(tuple(lst) for lst in dict2.values())
-    return unique_lists_dict1.symmetric_difference(unique_lists_dict2)
-
-
 class TemperatureHypergraph:
     def __init__(self, producer: TemperatureIncidenceProducer) -> None:
-        self.H: hnx.Hypergraph = None
+        self.HG: hnx.Hypergraph = None
         self.producer = producer
         self.analyzed_temperatures = set()
 
@@ -21,67 +16,19 @@ class TemperatureHypergraph:
             return
         self.analyzed_temperatures.add(temperature)
         incidence_dict = self.producer.get_temperature_incidence_dict(temperature)
-        if self.H is None:
-            edge_properties = {edge: {'temp': {temperature}} for edge in incidence_dict}
+        if self.HG is None:
+            edge_properties = {edge: {"temp": {temperature}} for edge in incidence_dict}
         else:
             # TODO aggiornare anche l'incidence dict
-            # aggiungo i link che collegano un nucleotide al successivo
-            links = {edge: temps for edge, temps in incidence_dict.items() if edge.startswith('l')}
-            new_db_connections = find_unique_lists(
-                {edge: temps for edge, temps in incidence_dict.items() if edge.startswith('db')},
-                {edge: temps for edge, temps in self.H.incidence_dict.items() if edge.startswith('db')}
-            )
-            last_db = max((int(k[3:]) for k in self.H.incidence_dict.keys()))  # TODO trovare il modo di farlo O(1)
-            new_structures_connections = [
-                find_unique_lists(
-                    {edge: temps for edge, temps in incidence_dict.items() if not edge.startswith(ignore)},
-                    {edge: temps for edge, temps in self.H.incidence_dict.items() if not edge.startswith(ignore)}
-                ) for ignore in ['l', 'db']
-            ]
-            incidence_dict = {}
-            incidence_dict.update(links)
-            incidence_dict.update(new_db_connections)
+            incidence_dict = self.__update_incidence_dict(incidence_dict)
+            edge_properties = self.__update_edge_properties(incidence_dict)
             # incidence_dict.update(new_structures_connections)
 
-            # # i link in successione non cambiano mai
-            # edge_properties = {
-            #     edge: add_temperature(self.H.get_properties(edge)['properties']['temp'], temperature) for edge in
-            #     incidence_dict if edge.startswith('l')}
-            #
-            # # ricavo le nuove connessioni date dal cambiamento del dotbracket
-            # new_bd_connections = sets_not_in_both_dicts(
-            #     {edge: temps for edge, temps in incidence_dict.items() if edge.startswith('db')},
-            #     {edge: temps for edge, temps in self.H.incidence_dict.items() if edge.startswith('db')}
-            # )
-            # new_dotbracket_connections = find_different_lists(
-            #     {edge: temps for edge, temps in incidence_dict.items() if edge.startswith('db')},
-            #     {edge: temps for edge, temps in self.H.incidence_dict.items() if edge.startswith('db')})
-            # # le nuove connessioni avranno lo stesso nome di quelle esistenti, bisogna quindi cambiare nome
-            # db_edges = [edge for edge in self.H.incidence_dict.keys() if edge.startswith('db')]
-            # last_edge = db_edges[len(db_edges) - 1][3:]
-            # last_edge = int(last_edge)
-            # for edge in new_dotbracket_connections.keys():
-            #     last_edge += 1
-            #     new_dotbracket_connections[f'db_{last_edge}'] = new_dotbracket_connections[edge]
-            #     del new_dotbracket_connections[edge]
-            # edge_properties.update(new_dotbracket_connections)
-
-            # edge_properties.update(
-            #     {edge: temps for edge, temps in self.H.incidence_dict.items() if edge.startswith('db')})
-            # edge_properties.update({edge: temps for edge, temps in incidence_dict.items() if edge.startswith('db')})
-            #
-            # new_structures_connections = self.find_different_lists(
-            #     {edge: temps for edge, temps in incidence_dict.items() if
-            #      not edge.startswith('db') and not edge.startswith('l')},
-            #     {edge: temps for edge, temps in self.H.incidence_dict.items() if
-            #      not edge.startswith('db') and not edge.startswith('l')})
-            # edge_properties.update(new_structures_connections)
-        #
         # edge_properties = {edge: {'temp': {temperature}} for edge in incidence_dict if
         #                        edge not in self.H.incidence_dict}
         #     edge_properties.update({edge: self.H.get_properties(edge)['properties']['temp'].add(temperature) for edge in
         #                             incidence_dict})
-        self.H = hnx.Hypergraph(incidence_dict, edge_properties=edge_properties)
+        self.HG = hnx.Hypergraph(incidence_dict, edge_properties=edge_properties)
         # print(self.H.edge_properties)
         pass
 
@@ -101,20 +48,80 @@ class TemperatureHypergraph:
         #     ):
         pass
 
+    def __update_incidence_dict(self, new_incidence):
+        # i link che connettono un nucleotide al successivo non cambiano
+        links = {
+            edge: temps for edge, temps in new_incidence.items() if edge.startswith("l")
+        }
+        new_db_dict = self.__get_new_dotbracket(new_incidence)
+        new_structure_dict = self.__get_new_structures(new_incidence)
+        incidence_dict = {}
+        incidence_dict.update(links)
+        incidence_dict.update(new_db_dict)
+        incidence_dict.update(new_structure_dict)
+        return incidence_dict
+
+    def __get_new_dotbracket(self, new_incidence):
+        db_old = [
+            temps
+            for edge, temps in self.HG.incidence_dict.items()
+            if edge.startswith("db")
+        ]
+        db_new = [
+            list(temps)  # TODO trovare il modo di trasformarlo in list
+            for edge, temps in new_incidence.items()
+            if edge.startswith("db")
+        ]
+        new_db_sets = [s for s in db_new if s not in db_old]
+        last_db_number = find_max_numeric_value(
+            self.HG.incidence_dict.keys()
+        )  # TODO trovare il modo di farlo O(1)
+        last_db_number += 1
+        new_db_dict = self.HG.incidence_dict
+        for s in new_db_sets:
+            new_db_dict[f"db_{last_db_number}"] = s
+            last_db_number += 1
+        return new_db_dict
+
+    def __get_new_structures(self, new_incidence):
+        str_old = {
+            edge: temps
+            for edge, temps in self.HG.incidence_dict.items()
+            if not edge.startswith("db") and not edge.startswith("l")
+        }
+        str_new = {
+            edge: list(temps)  # TODO trovare il modo di trasformarlo in list
+            for edge, temps in new_incidence.items()
+            if not edge.startswith("db") and not edge.startswith("l")
+        }
+        new_str_to_add = {e[0]: s for e, s in str_new.items() if s not in str_old.values()}
+        str_last = {edge[0]: find_max_numeric_value(
+            [k for k in str_old.keys() if k.startswith(edge[0])]) for edge in new_str_to_add.keys()}
+        new_structures = {}
+        for edge, s in new_str_to_add.items():
+            new_str_key = f"{edge}_{str_last[edge] + 1}"
+            new_structures[new_str_key] = s
+            str_last[edge] += 1
+        return new_structures
+
+    def __update_edge_properties(self, incidence_dict):
+        pass
+
 
 def add_temperature(temp_set, temperature):
     temp_set.add(temperature)
     return temp_set
 
 
-def find_different_lists(dict1, dict2):
-    result = {}
-    for key, list1 in dict1.items():
-        is_different = True
-        for _, list2 in dict2.items():
-            if set(list1) == set(list2):
-                is_different = False
-                break
-        if is_different:
-            result[key] = list1
-    return result
+def extract_numeric(s):
+    numeric_parts = re.findall(r'\d+', s)
+    return [int(num) for num in numeric_parts]
+
+
+def find_max_numeric_value(string_list):
+    all_numeric_values = [val for s in string_list for val in extract_numeric(s)]
+    if all_numeric_values:
+        max_value = max(all_numeric_values)
+        return max_value
+    else:
+        return None
