@@ -25,6 +25,7 @@ class ViennaIncidenceProducer(TemperatureIncidenceProducer, Connector):
         :return: il dizionario di incidenza
         """
         self.dotbracket = self.folder.temperature_folding(temperature)
+        self.incidence_dict.clear()
         self.connect_to_next()
         self.dotbracket_connections()
         self.structure_connections()
