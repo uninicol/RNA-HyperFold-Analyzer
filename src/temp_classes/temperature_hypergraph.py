@@ -26,7 +26,7 @@ class MemoryOptimizedFoldingHypergraph(TemporalHypergraph):
         found = False
         for k, v in self.time_hypergraphs.items():
             if incidence_dict == v.incidence_dict:
-                s = frozenset(sorted(k.union([time])))
+                s = k.union([time])
                 self.time_hypergraphs[s] = self.time_hypergraphs[k]
                 del self.time_hypergraphs[k]
                 found = True
