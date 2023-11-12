@@ -1,3 +1,4 @@
+from abc import ABC, abstractmethod
 from concurrent.futures.process import ProcessPoolExecutor
 
 import hypernetx as hnx
@@ -5,35 +6,55 @@ import hypernetx as hnx
 from src.incidence_producers.temperature_incidence_producer import TemperatureIncidenceProducer
 
 
-class TemporalHypergraph:
+class TemporalHypergraph(ABC):
+
+    @abstractmethod
+    def add_incidence_dict(self, incidence_dict, time):
+        pass
+
+    @abstractmethod
+    def get_time_hypergraph(self, time):
+        pass
+
+
+class BasicTemporalHypergraph(TemporalHypergraph):
 
     def __init__(self):
-        self.time_hypergraphs = {}
+        self.__time_hypergraphs = {}
 
     def add_incidence_dict(self, incidence_dict, time):
         if incidence_dict is None or time is None:
             return
-        self.time_hypergraphs[time] = hnx.Hypergraph(incidence_dict)
+        self.__time_hypergraphs[time] = hnx.Hypergraph(incidence_dict)
         pass
+
+    def get_time_hypergraph(self, time):
+        return self.__time_hypergraphs[time]
 
 
 class MemoryOptimizedFoldingHypergraph(TemporalHypergraph):
 
     def __init__(self):
-        super().__init__()
+        self.__time_hypergraphs = {}
 
     def add_incidence_dict(self, incidence_dict, time):
         found = False
-        for k, v in self.time_hypergraphs.items():
-            if incidence_dict == v.incidence_dict:
-                s = k.union([time])
-                self.time_hypergraphs[s] = self.time_hypergraphs[k]
-                del self.time_hypergraphs[k]
+        for temps, HG in self.__time_hypergraphs.items():
+            if incidence_dict == HG.incidence_dict:
+                new_temps = temps.union([time])
+                self.__time_hypergraphs[new_temps] = self.__time_hypergraphs[temps]
+                del self.__time_hypergraphs[temps]
                 found = True
                 break
         if not found:
-            self.time_hypergraphs[frozenset([time])] = hnx.Hypergraph(incidence_dict)
+            self.__time_hypergraphs[frozenset([time])] = hnx.Hypergraph(incidence_dict)
         pass
+
+    def get_time_hypergraph(self, time):
+        for temps, HG in self.__time_hypergraphs.items():
+            if time in temps:
+                return HG
+        return None
 
 
 class TemperatureFoldingHypergraph:
@@ -63,3 +84,6 @@ class TemperatureFoldingHypergraph:
     def insert_temperature_range(self, start_temperature: int, end_temperature: int, step: int = 1):
         temperatures = list(range(start_temperature, end_temperature + 1, step))
         self.insert_temperatures(temperatures)
+
+    def get_hypergraph(self, temperature):
+        return self.__temperature_HG.get_time_hypergraph(temperature)
