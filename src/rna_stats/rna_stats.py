@@ -1,28 +1,19 @@
 from abc import ABC, abstractmethod
 
-import hypernetx as hnx
 
-from src.incidence_producers.temperature_incidence_producer import TemperatureIncidenceProducer
-
-
-class RnaStats(ABC):
-    def __init__(self, producer: TemperatureIncidenceProducer, temperature: int) -> None:
-        incidence_dict = producer.get_temperature_incidence_dict(temperature)
-        self.H = hnx.Hypergraph(incidence_dict)
-        del incidence_dict
-        pass
+class RnaHypergraphStats(ABC):
 
     @abstractmethod
     def secondary_structures(self) -> dict:
         """
-        Restituisce il dizionario contenente le strutture secondarie rilevate
+        Restituisce il dizionario contenente le strutture secondarie rilevate nella temperatura selezionata
         """
         pass
 
     @abstractmethod
     def modularity(self) -> float:
         """
-        Restituisce la modularità dell'ipergrafo
+        Restituisce la modularità dell'ipergrafo nella temperatura selezionata
         :return: la modularità dell'ipergrafo
         """
         pass
@@ -30,7 +21,7 @@ class RnaStats(ABC):
     @abstractmethod
     def subset_conductance(self, subset: set) -> float:
         """
-        Restituisce la conduttanza di una partizione
+        Restituisce la conduttanza di una partizione nella temperatura selezionata
         :param subset: la partizione
         :return: la conduttanza della partizione
         """
@@ -39,16 +30,16 @@ class RnaStats(ABC):
     @abstractmethod
     def partitions_conductance(self) -> list[float]:
         """
-        Restituisce la conduttanza di tutte le partizioni
+        Restituisce la conduttanza di tutte le partizioni nella temperatura selezionata
         :return: la lista contenente la conduttanza di tutte le partizioni
         """
         pass
 
     @abstractmethod
-    def n_between_centrality(self, n: int = 1) -> dict:
+    def s_between_centrality(self, s: int = 1) -> dict:
         """
-        Restituisce la n-between-centrality dei nucleotidi
-        :param n: connectedness requirement
+        Restituisce la n-between-centrality dei nucleotidi nella temperatura selezionata
+        :param s: connectedness requirement
         :return: la n-between-centrality dei nucleotidi
         """
         pass

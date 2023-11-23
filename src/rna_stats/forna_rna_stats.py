@@ -2,31 +2,27 @@ import hypernetx as hnx
 import hypernetx.algorithms.hypergraph_modularity as hmod
 import matplotlib.pyplot as plt
 
-from src.incidence_producers.temperature_incidence_producer import TemperatureIncidenceProducer
-from src.rna_stats.rna_stats import RnaStats
+from src.rna_stats.rna_stats import RnaHypergraphStats
 
 
-class FornaRnaStats(RnaStats):
+class FornaRnaStats(RnaHypergraphStats):
     """Classe che raccoglie delle statistiche su una sequenza di RNA utilizzando un ipergrafo"""
 
-    def __init__(self, producer: TemperatureIncidenceProducer, temperature: int) -> None:
-        super().__init__(producer, temperature)
+    def __init__(self, HG: hnx.Hypergraph) -> None:
+        self.HG = HG
         self.__partitions: list = []
-        self.__precomputed_H: list[set] = []
 
     def secondary_structures(self) -> dict:
         structures = {}
-        for key, value in self.H.incidence_dict.items():
-            if not key.startswith("l"):
+        for key, value in self.HG.incidence_dict.items():
+            if not key.startswith("l") and not key.startswith("db"):
                 structures[key] = value
         return structures
 
     def partitions(self) -> list:
         """Computa delle partizioni dell'ipergrafo"""
-        if len(self.__precomputed_H) == 0:
-            self.__precomputed_H = hmod.precompute_attributes(self.H)
         if len(self.__partitions) == 0:
-            self.__partitions = hmod.kumar(self.__precomputed_H)
+            self.__partitions = hmod.kumar(self.HG)
         return self.__partitions
 
     def partition(self, n: int) -> set:
@@ -44,7 +40,7 @@ class FornaRnaStats(RnaStats):
         :return: la modularità dell'ipergrafo
         """
         self.partitions()
-        return hmod.modularity(self.__precomputed_H, self.__partitions)
+        return hmod.modularity(self.HG, self.__partitions)
 
     def subset_conductance(self, subset: set) -> float:
         """
@@ -52,17 +48,7 @@ class FornaRnaStats(RnaStats):
         :param subset: la partizione
         :return: la conduttanza della partizione
         """
-        subset2 = [n for n in self.H.nodes if n not in subset]
-        ws = sum((self.H.degree(node) for node in subset))
-        was = 0
-        for edge in self.H.edges:
-            he_vertices = self.H.edges[edge]
-            if len([n for n in he_vertices if n in subset]) == 0:
-                continue
-            if len([n for n in he_vertices if n in subset2]) == 0:
-                continue
-            was += len(he_vertices)
-        return was / ws
+        return hmod.conductance(self.HG, subset)
 
     def partitions_conductance(self) -> list[float]:
         """
@@ -71,18 +57,18 @@ class FornaRnaStats(RnaStats):
         """
         return [self.subset_conductance(subset) for subset in self.partitions()]
 
-    def n_between_centrality(self, n: int = 1) -> dict:
+    def s_between_centrality(self, s=1) -> dict:
         """
         Restituisce la n-between-centrality dei nucleotidi
-        :param n: connectedness requirement
+        :param s: connectedness requirement
         :return: la n-between-centrality dei nucleotidi
         """
-        return hnx.algorithms.s_betweenness_centrality(self.H, n)
+        return hnx.algorithms.s_betweenness_centrality(self.HG, s)
 
     def plot_hypergraph(self, size: tuple = (40, 40)) -> None:
         """Disegna un grafico che rappresenta l'ipergrafo costruito"""
         plt.subplots(figsize=size)
-        hnx.draw(self.H, **{'layout_kwargs': {'seed': 39}})
+        hnx.draw(self.HG, **{'layout_kwargs': {'seed': 39}})
         plt.show()
 
     def plot_partitions_conductance(self) -> None:
@@ -104,7 +90,7 @@ class FornaRnaStats(RnaStats):
         Disegna un grafico che rappresenta la n-between-centrality dei nucleotidi
         :param n: connectedness requirement
         """
-        centrality = self.n_between_centrality(n)
+        centrality = self.s_between_centrality()
         seq = list(centrality.keys())
         centr = list(centrality.values())
 
