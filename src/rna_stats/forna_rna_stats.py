@@ -1,3 +1,5 @@
+from collections import defaultdict
+
 import hypernetx as hnx
 import hypernetx.algorithms.hypergraph_modularity as hmod
 import matplotlib.pyplot as plt
@@ -5,7 +7,7 @@ import matplotlib.pyplot as plt
 from src.rna_stats.rna_stats import RnaHypergraphStats
 
 
-class FornaRnaStats(RnaHypergraphStats):
+class RnaStats(RnaHypergraphStats):
     """Classe che raccoglie delle statistiche su una sequenza di RNA utilizzando un ipergrafo"""
 
     def __init__(self, HG: hnx.Hypergraph) -> None:
@@ -99,3 +101,42 @@ class FornaRnaStats(RnaHypergraphStats):
         plt.xlabel("Nucleotides")
         plt.ylabel("Centrality")
         plt.show()
+
+    def structure_differences(self, hypergraph: hnx.Hypergraph) -> dict:
+        """
+        Restituisce un dizionario che indica le strutture aggiunte o rimosse dall'ipergrafo preso in input
+        :param hypergraph : ipergrafo da mettere a confronto
+        """
+        if len(self.HG.nodes) != len(hypergraph.nodes):
+            raise Exception("Ipergrafi hanno un numero diverso di nodi")
+        this_structures = self.secondary_structures()
+        other_structures = RnaStats(hypergraph).secondary_structures()
+
+        this_count = defaultdict(int)
+        for name in this_structures.keys():
+            this_count[name[0]] = this_count[name[0]] + 1
+        other_count = defaultdict(int)
+        for name in other_structures.keys():
+            other_count[name[0]] = other_count[name[0]] + 1
+
+        result = {key: this_count[key] - other_count[key] for key in this_count if
+                  key in other_count and this_count[key] != other_count[key]}
+        return result
+
+    def get_nucleotides_change_structure(self, hypergraph: hnx.Hypergraph) -> list:
+        """
+        Restituisce i nucleotidi che hanno subito un cambiamento di struttura
+        :param hypergraph : ipergrafo da mettere a confronto
+        """
+        if len(self.HG.nodes) != len(hypergraph.nodes):
+            raise Exception("Ipergrafi non hanno lo stesso numero di nucleotidi")
+        this_structures = self.secondary_structures()
+        other_structures = RnaStats(hypergraph).secondary_structures()
+        differences = []
+        for this_name, this_structure in this_structures.items():
+            for other_name, other_structure in other_structures.items():
+                if this_name == other_name:
+                    differences.append([item for item in this_structure if item not in other_structure])
+                    break
+
+        return [element for row in differences for element in row]
