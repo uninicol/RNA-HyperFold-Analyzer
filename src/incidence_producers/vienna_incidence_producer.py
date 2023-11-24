@@ -3,9 +3,9 @@ from collections import deque
 
 import forgi
 
+from src.hypergraph_folding.rna_folder import RNAFolder
 from src.incidence_producers.connector import Connector
 from src.incidence_producers.temperature_incidence_producer import TemperatureIncidenceProducer
-from src.temp_classes.rna_folder import RNAFolder
 
 
 class ViennaIncidenceProducer(TemperatureIncidenceProducer, Connector):
