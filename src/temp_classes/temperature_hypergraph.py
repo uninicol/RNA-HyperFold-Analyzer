@@ -7,21 +7,23 @@ from src.incidence_producers.temperature_incidence_producer import TemperatureIn
 
 
 class TemporalHypergraph(ABC):
+    """Classe astratta che rappresenta un ipergrafo dinamico"""
 
     @abstractmethod
-    def add_incidence_dict(self, incidence_dict, time):
+    def add_incidence_dict(self, incidence_dict: dict, time: int) -> None:
         pass
 
     @abstractmethod
-    def get_time_hypergraph(self, time):
+    def get_time_hypergraph(self, time: int) -> hnx.Hypergraph:
         pass
 
     @abstractmethod
-    def time_hypergraph_exists(self, time):
+    def time_hypergraph_exists(self, time: int) -> bool:
         pass
 
 
 class BasicTemporalHypergraph(TemporalHypergraph):
+    """Ipergrafo dinamico standard"""
 
     def __init__(self):
         self.__time_hypergraphs = {}
@@ -40,6 +42,7 @@ class BasicTemporalHypergraph(TemporalHypergraph):
 
 
 class MemoryOptimizedFoldingHypergraph(TemporalHypergraph):
+    """Ipergrafo dinamico ottimizzato, sotto il punto di vista della memoria, per i diversi folding dell'rna"""
 
     def __init__(self):
         self.__time_hypergraphs = {}
@@ -71,20 +74,26 @@ class MemoryOptimizedFoldingHypergraph(TemporalHypergraph):
 
 
 class TemperatureFoldingHypergraph:
+    """Classe che permette di computare e memorizzare i folding di diverse temperature"""
 
     def __init__(self, producer: TemperatureIncidenceProducer) -> None:
         self.__producer = producer
         self.temperature_HG = MemoryOptimizedFoldingHypergraph()
         self.__analyzed_temperatures = set()
 
-    def insert_temperature(self, temperature):
+    def insert_temperature(self, temperature: int) -> bool:
+        """
+        Computa il folding in una certa temperatura
+        :return : True se il folding è stato computato, False se il folding è stato computato precedentemente
+        """
         if temperature in self.__analyzed_temperatures:
-            return
+            return False
         self.__analyzed_temperatures.add(temperature)
         incidence_dict = self.__producer.get_temperature_incidence_dict(temperature)
         self.temperature_HG.add_incidence_dict(incidence_dict, temperature)
+        return True
 
-    def insert_temperatures(self, temperatures: list[int]):
+    def insert_temperatures(self, temperatures: list[int]) -> None:
         for temp in temperatures.copy():
             if temp in self.__analyzed_temperatures:
                 temperatures.remove(temp)
@@ -98,5 +107,5 @@ class TemperatureFoldingHypergraph:
         temperatures = list(range(start_temperature, end_temperature + 1, step))
         self.insert_temperatures(temperatures)
 
-    def get_hypergraph(self, temperature):
+    def get_hypergraph(self, temperature: int) -> hnx.Hypergraph:
         return self.temperature_HG.get_time_hypergraph(temperature)
