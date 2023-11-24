@@ -1,6 +1,6 @@
 from abc import abstractmethod
 
-from src.incidence_producers.incidence_producer import IncidenceProducer
+from incidence_producers.incidence_producer import IncidenceProducer
 
 
 class TemperatureIncidenceProducer(IncidenceProducer):

@@ -4,7 +4,7 @@ import hypernetx as hnx
 import hypernetx.algorithms.hypergraph_modularity as hmod
 import matplotlib.pyplot as plt
 
-from src.rna_stats.rna_stats import RnaHypergraphStats
+from rna_stats.rna_stats import RnaHypergraphStats
 
 
 class RnaStats(RnaHypergraphStats):

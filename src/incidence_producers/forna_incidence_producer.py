@@ -2,8 +2,8 @@ import json
 from collections import defaultdict
 from collections import deque
 
-from src.incidence_producers.connector import Connector
-from src.incidence_producers.incidence_producer import IncidenceProducer
+from incidence_producers.connector import Connector
+from incidence_producers.incidence_producer import IncidenceProducer
 
 
 class FornaIncidenceProducer(IncidenceProducer, Connector):

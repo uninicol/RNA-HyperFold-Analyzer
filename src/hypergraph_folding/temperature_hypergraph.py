@@ -3,7 +3,7 @@ from concurrent.futures.process import ProcessPoolExecutor
 
 import hypernetx as hnx
 
-from src.incidence_producers.temperature_incidence_producer import TemperatureIncidenceProducer
+from incidence_producers.temperature_incidence_producer import TemperatureIncidenceProducer
 
 
 class TemporalHypergraph(ABC):
