@@ -133,6 +133,7 @@ class RnaStats(RnaHypergraphStats):
         this_structures = self.secondary_structures()
         other_structures = RnaStats(hypergraph).secondary_structures()
         differences = []
+        # Scorro le strutture dei due ipergrafi e individuo i nucleotidi che cambiano struttura
         for this_name, this_structure in this_structures.items():
             for other_name, other_structure in other_structures.items():
                 if this_name == other_name:
@@ -140,3 +141,33 @@ class RnaStats(RnaHypergraphStats):
                     break
 
         return [element for row in differences for element in row]
+
+
+class TemperatureFoldingStats(TemporalRnaStats):
+
+    def __init__(self, THG: TemperatureFoldingHypergraph) -> None:
+        self.THG = THG
+
+    def get_nucleotide_sensibility_to_changes(self, start_temp, end_temp):
+        """Misura la sensibilità al cambiamento di struttura dei nucleotidi in un range di temperatura"""
+        self.THG.insert_temperature_range(start_temp, end_temp)
+        counts = defaultdict(int)
+        for temp in range(start_temp, end_temp):
+            h1 = self.THG.get_hypergraph(temp)
+            h2 = self.THG.get_hypergraph(temp + 1)
+            if h1 is h2:
+                continue
+            st = RnaStats(h1)
+            elements = st.get_nucleotides_change_structure(h2)
+            for elem in elements:
+                counts[elem] += 1
+        return counts
+
+    def plot_nucleotide_sensibility_to_changes(self, start_temp, end_temp):
+        sens = self.get_nucleotide_sensibility_to_changes(start_temp, end_temp)
+        ordered_keys = sorted(sens.keys())
+        ordered_values = [sens[key] for key in ordered_keys]
+        seq = list(ordered_keys)
+        centr = list(ordered_values)
+        plt.bar(seq, centr)
+        plt.show()

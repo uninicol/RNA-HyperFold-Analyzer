@@ -43,3 +43,7 @@ class RnaHypergraphStats(ABC):
         :return: la n-between-centrality dei nucleotidi
         """
         pass
+
+
+class TemporalRnaStats(ABC):
+    pass
