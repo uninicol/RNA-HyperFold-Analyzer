@@ -3,8 +3,11 @@ from collections import defaultdict
 import hypernetx as hnx
 import hypernetx.algorithms.hypergraph_modularity as hmod
 import matplotlib.pyplot as plt
+import networkx as nx
 
-from rna_stats.rna_stats import RnaHypergraphStats
+from fa2 import ForceAtlas2
+from hypergraph_folding.temperature_hypergraph import TemperatureFoldingHypergraph
+from rna_stats.rna_stats import RnaHypergraphStats, TemporalRnaStats
 
 
 class RnaStats(RnaHypergraphStats):
@@ -69,9 +72,41 @@ class RnaStats(RnaHypergraphStats):
 
     def plot_hypergraph(self, size: tuple = (40, 40)) -> None:
         """Disegna un grafico che rappresenta l'ipergrafo costruito"""
-        plt.subplots(figsize=size)
-        hnx.draw(self.HG, **{'layout_kwargs': {'seed': 39}})
-        plt.show()
+        if len(self.HG.nodes) > 250:
+            forceatlas2 = ForceAtlas2(
+                # Behavior alternatives
+                outboundAttractionDistribution=True,  # Dissuade hubs
+                adjustSizes=False,  # Prevent overlap (NOT IMPLEMENTED)
+                edgeWeightInfluence=1.0,
+
+                # Performance
+                jitterTolerance=1.0,  # Tolerance
+                barnesHutOptimize=True,
+                barnesHutTheta=1.2,
+
+                # Tuning
+                scalingRatio=2.0,
+                strongGravityMode=False,
+                gravity=1.0,
+
+                # Log
+                verbose=True)
+            G = self.HG.bipartite()
+            positions = forceatlas2.forceatlas2_networkx_layout(G)
+            nx.draw_networkx_nodes(G, positions, node_size=50)
+            nx.draw_networkx_edges(G, positions)
+            plt.axis('off')
+            plt.show()
+            G = hmod.two_section(self.HG).to_networkx()
+            positions = forceatlas2.forceatlas2_networkx_layout(G)
+            nx.draw_networkx_nodes(G, positions, node_size=50)
+            nx.draw_networkx_edges(G, positions)
+            plt.axis('off')
+            plt.show()
+        else:
+            plt.subplots(figsize=size)
+            hnx.draw(self.HG, **{'layout_kwargs': {'seed': 39}})
+            plt.show()
 
     def plot_partitions_conductance(self) -> None:
         """Disegna un grafico che rappresenta la conduttanza delle partizioni"""
