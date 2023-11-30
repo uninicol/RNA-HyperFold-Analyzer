@@ -1,1 +1,1 @@
-# rna-hypergraph-stats
+# RNA-HyperFold-Analyzer
