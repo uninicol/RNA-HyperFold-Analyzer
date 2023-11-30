@@ -72,6 +72,7 @@ class RnaStats(RnaHypergraphStats):
     def plot_hypergraph(self, size: tuple = (40, 40)) -> None:
         """Disegna un grafico che rappresenta l'ipergrafo costruito"""
         if len(self.HG.nodes) > 250:
+            plt.subplots(figsize=size)
             G = hmod.two_section(self.HG).to_networkx()
             nx.draw(G, node_size=50)
             plt.show()
@@ -80,8 +81,9 @@ class RnaStats(RnaHypergraphStats):
             hnx.draw(self.HG, **{'layout_kwargs': {'seed': 39}})
             plt.show()
 
-    def plot_partitions_conductance(self) -> None:
+    def plot_partitions_conductance(self, size=(20, 10)) -> None:
         """Disegna un grafico che rappresenta la conduttanza delle partizioni"""
+        plt.subplots(figsize=size)
         cond = self.partitions_conductance()
         seq = []
         values = []
@@ -94,11 +96,12 @@ class RnaStats(RnaHypergraphStats):
         plt.ylabel("Conductance")
         plt.show()
 
-    def plot_n_between_centrality(self, n: int = 1) -> None:
+    def plot_n_between_centrality(self, n: int = 1, size=(20, 10)) -> None:
         """
         Disegna un grafico che rappresenta la n-between-centrality dei nucleotidi
         :param n: connectedness requirement
         """
+        plt.subplots(figsize=size)
         centrality = self.s_between_centrality()
         seq = list(centrality.keys())
         centr = list(centrality.values())
@@ -170,11 +173,12 @@ class TemperatureFoldingStats(TemporalRnaStats):
                 counts[elem] += 1
         return counts
 
-    def plot_nucleotide_sensibility_to_changes(self, start_temp, end_temp):
+    def plot_nucleotide_sensibility_to_changes(self, start_temp, end_temp, size=(20, 10)):
         sens = self.get_nucleotide_sensibility_to_changes(start_temp, end_temp)
         ordered_keys = sorted(sens.keys())
         ordered_values = [sens[key] for key in ordered_keys]
         seq = list(ordered_keys)
         centr = list(ordered_values)
+        plt.subplots(figsize=size)
         plt.bar(seq, centr)
         plt.show()
