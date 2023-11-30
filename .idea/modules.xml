@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/rna-hypergraph-stats.iml" filepath="$PROJECT_DIR$/.idea/rna-hypergraph-stats.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/RNA-HyperFold-Analyzer.iml" filepath="$PROJECT_DIR$/.idea/RNA-HyperFold-Analyzer.iml" />
     </modules>
   </component>
 </project>
