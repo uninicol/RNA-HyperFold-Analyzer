@@ -73,12 +73,43 @@ class MemoryOptimizedFoldingHypergraph(TemporalHypergraph):
         return False
 
 
+class SearchOptimizedFoldingHypergraph(TemporalHypergraph):
+    """Ipergrafo dinamico ottimizzato, sotto il punto di vista della velocità di ricerca, per i diversi folding dell'rna"""
+
+    def __init__(self):
+        self.__time_hypergraphs = {}
+        self.__time_to_set = {}
+
+    def add_incidence_dict(self, incidence_dict, time):
+        found = False
+        for temps, HG in self.__time_hypergraphs.items():
+            if incidence_dict == HG.incidence_dict:
+                new_temps = temps.union([time])
+                self.__time_hypergraphs[new_temps] = self.__time_hypergraphs[temps]
+                del self.__time_hypergraphs[temps]
+                for t in new_temps:
+                    self.__time_to_set[t] = new_temps
+                found = True
+                break
+        if not found:
+            new_temp = frozenset([time])
+            self.__time_hypergraphs[new_temp] = hnx.Hypergraph(incidence_dict)
+            self.__time_to_set[time] = new_temp
+        pass
+
+    def get_time_hypergraph(self, time):
+        return self.__time_hypergraphs[self.__time_to_set[time]]
+
+    def time_hypergraph_exists(self, time):
+        return time in self.__time_to_set.keys()
+
+
 class TemperatureFoldingHypergraph:
     """Classe che permette di computare e memorizzare i folding di diverse temperature"""
 
-    def __init__(self, producer: TemperatureIncidenceProducer) -> None:
+    def __init__(self, producer: TemperatureIncidenceProducer, temporal_hypergraph: TemporalHypergraph) -> None:
         self.__producer = producer
-        self.temperature_HG = MemoryOptimizedFoldingHypergraph()
+        self.temperature_HG = temporal_hypergraph
         self.__analyzed_temperatures = set()
 
     def insert_temperature(self, temperature: int) -> bool:
