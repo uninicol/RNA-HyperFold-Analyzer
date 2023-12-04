@@ -112,6 +112,17 @@ class RnaStats(RnaHypergraphStats):
         plt.ylabel("Centrality")
         plt.show()
 
+    def connection_differences(self, hypergraph: hnx.Hypergraph):
+        """
+        Restituisce
+        :param hypergraph : ipergrafo da mettere a confronto
+        """
+        if len(self.HG.nodes) != len(hypergraph.nodes):
+            raise Exception("Ipergrafi hanno un numero diverso di nodi")
+        this_connections = [v for k, v in self.HG.incidence_dict.items() if k[0:2] == 'db']
+        other_connections = [v for k, v in hypergraph.incidence_dict.items() if k[0:2] == 'db']
+        return [item for item in this_connections if item not in other_connections]
+
     def structure_differences(self, hypergraph: hnx.Hypergraph) -> dict:
         """
         Restituisce un dizionario che indica le strutture aggiunte o rimosse dall'ipergrafo preso in input
@@ -152,13 +163,12 @@ class RnaStats(RnaHypergraphStats):
 
         return [element for row in differences for element in row]
 
-
 class TemperatureFoldingStats(TemporalRnaStats):
 
     def __init__(self, THG: TemperatureFoldingHypergraph) -> None:
         self.THG = THG
 
-    def get_nucleotide_sensibility_to_changes(self, start_temp, end_temp):
+    def get_nucleotide_sensibility_to_changes(self, start_temp: int, end_temp: int) -> dict:
         """Misura la sensibilità al cambiamento di struttura dei nucleotidi in un range di temperatura"""
         self.THG.insert_temperature_range(start_temp, end_temp)
         counts = defaultdict(int)
@@ -182,3 +192,16 @@ class TemperatureFoldingStats(TemporalRnaStats):
         plt.subplots(figsize=size)
         plt.bar(seq, centr)
         plt.show()
+
+    def get_structure_differences(self, start_temp, end_temp):
+        self.THG.insert_temperature_range(start_temp, end_temp)
+        diffs = {}
+        for temp in range(start_temp, end_temp):
+            h1 = self.THG.get_hypergraph(temp)
+            h2 = self.THG.get_hypergraph(temp + 1)
+            if h1 is h2:
+                continue
+            st = RnaStats(h1)
+            elements = st.structure_differences(h2)
+            diffs[(temp, temp + 1)] = elements
+        return diffs
