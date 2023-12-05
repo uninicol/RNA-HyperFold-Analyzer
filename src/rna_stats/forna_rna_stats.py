@@ -22,6 +22,7 @@ class RnaStats(RnaHypergraphStats):
         self.__plotter.plot_hypergraph(self.HG, size)
 
     def secondary_structures(self) -> dict:
+        """Restituisce le strutture secondarie rilevate"""
         structures = {}
         for key, value in self.HG.incidence_dict.items():
             if not key.startswith("l") and not key.startswith("db"):
@@ -62,6 +63,8 @@ class RnaStats(RnaHypergraphStats):
     def partitions_conductance(self, plot=False, plot_size=(20, 10)) -> list[float]:
         """
         Restituisce la conduttanza di tutte le partizioni
+        :param plot: indica se fare il grafico della conduttanza
+        :param plot_size: se viene richiesto il grafico, definisce la sua grandezza
         :return: la lista contenente la conduttanza di tutte le partizioni
         """
         conductances = [self.subset_conductance(subset) for subset in self.partitions()]
@@ -73,6 +76,8 @@ class RnaStats(RnaHypergraphStats):
         """
         Restituisce la n-between-centrality dei nucleotidi
         :param n: connectedness requirement
+        :param plot: indica se fare il grafico della conduttanza
+        :param plot_size: se viene richiesto il grafico, definisce la sua grandezza
         :return: la n-between-centrality dei nucleotidi
         """
         centrality = hnx.algorithms.s_betweenness_centrality(self.HG, n)
@@ -82,7 +87,7 @@ class RnaStats(RnaHypergraphStats):
 
     def connection_differences(self, hypergraph: hnx.Hypergraph):
         """
-        Restituisce
+        Restituisce le differenze di connessione nucleotide-nucleotide
         :param hypergraph : ipergrafo da mettere a confronto
         """
         if len(self.HG.nodes) != len(hypergraph.nodes):
@@ -140,7 +145,15 @@ class TemperatureFoldingStats(TemporalRnaStats):
         self.THG = THG
         self.__plotter = TemperatureFoldingStatsPlotter()
 
-    def get_nucleotide_sensibility_to_changes(self, start_temp: int, end_temp: int, plot=False, plot_size=(20, 10)):
+    def get_nucleotide_sensibility_to_changes(self, start_temp: int, end_temp: int, plot=False,
+                                              plot_size: tuple = (20, 10)) -> dict:
+        """
+        Restituisce un dizionario che indica, per ogni nucleotide, quante volte ha cambiato struttura in un range di temperature
+        :param start_temp: la temperatura iniziale
+        :param end_temp: la temperatura finale
+        :param plot: indica se fare il grafico della conduttanza
+        :param plot_size: se viene richiesto il grafico, definisce la sua grandezza
+        """
         self.THG.insert_temperature_range(start_temp, end_temp)
         counts = defaultdict(int)
         h1 = self.THG.get_hypergraph(start_temp)
@@ -153,10 +166,16 @@ class TemperatureFoldingStats(TemporalRnaStats):
             for elem in elements:
                 counts[elem] += 1
         if plot:
-            self.__plotter.plot_nucleotide_sensibility_to_changes(counts, start_temp, end_temp, size=plot_size)
+            self.__plotter.plot_nucleotide_sensibility_to_changes(counts, size=plot_size)
         return counts
 
     def get_structure_differences(self, start_temp, end_temp):
+        """
+        Restituisce un dizionario contenente il numero di strutture create o rimosse in un range di temperature dalla
+        temperatura di partenza
+        :param start_temp: la temperatura iniziale
+        :param end_temp: la temperatura finale
+        """
         self.THG.insert_temperature_range(start_temp, end_temp)
         diffs = {}
         h1 = self.THG.get_hypergraph(start_temp)
@@ -171,7 +190,10 @@ class TemperatureFoldingStats(TemporalRnaStats):
 class RnaStatsPlotter:
 
     def plot_hypergraph(self, HG: hnx.Hypergraph, size) -> None:
-        """Disegna un grafico che rappresenta l'ipergrafo costruito"""
+        """
+        Disegna un grafico che rappresenta l'ipergrafo costruito
+        :param HG: l'ipergrafo da disegnare
+        """
         if len(HG.nodes) > 250:
             plt.subplots(figsize=size)
             G = hmod.two_section(HG).to_networkx()
@@ -214,7 +236,7 @@ class RnaStatsPlotter:
 
 class TemperatureFoldingStatsPlotter:
 
-    def plot_nucleotide_sensibility_to_changes(self, sensibilities, start_temp, end_temp, size=(20, 10)):
+    def plot_nucleotide_sensibility_to_changes(self, sensibilities, size=(20, 10)):
         ordered_keys = sorted(sensibilities.keys())
         ordered_values = [sensibilities[key] for key in ordered_keys]
         seq = list(ordered_keys)
