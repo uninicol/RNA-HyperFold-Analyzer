@@ -15,6 +15,11 @@ class RnaStats(RnaHypergraphStats):
     def __init__(self, HG: hnx.Hypergraph) -> None:
         self.HG = HG
         self.__partitions: list = []
+        self.__plotter = RnaStatsPlotter()
+
+    def plot_hypergraph(self, size: tuple = (40, 40)) -> None:
+        """Disegna un grafico che rappresenta l'ipergrafo costruito"""
+        self.__plotter.plot_hypergraph(self.HG, size)
 
     def secondary_structures(self) -> dict:
         structures = {}
@@ -54,63 +59,26 @@ class RnaStats(RnaHypergraphStats):
         """
         return hmod.conductance(self.HG, subset)
 
-    def partitions_conductance(self) -> list[float]:
+    def partitions_conductance(self, plot=False, plot_size=(20, 10)) -> list[float]:
         """
         Restituisce la conduttanza di tutte le partizioni
         :return: la lista contenente la conduttanza di tutte le partizioni
         """
-        return [self.subset_conductance(subset) for subset in self.partitions()]
+        conductances = [self.subset_conductance(subset) for subset in self.partitions()]
+        if plot:
+            self.__plotter.plot_partitions_conductance(conductances, size=plot_size)
+        return conductances
 
-    def s_between_centrality(self, s=1) -> dict:
+    def n_between_centrality(self, n=1, plot=False, plot_size=(20, 10)) -> dict:
         """
         Restituisce la n-between-centrality dei nucleotidi
-        :param s: connectedness requirement
+        :param n: connectedness requirement
         :return: la n-between-centrality dei nucleotidi
         """
-        return hnx.algorithms.s_betweenness_centrality(self.HG, s)
-
-    def plot_hypergraph(self, size: tuple = (40, 40)) -> None:
-        """Disegna un grafico che rappresenta l'ipergrafo costruito"""
-        if len(self.HG.nodes) > 250:
-            plt.subplots(figsize=size)
-            G = hmod.two_section(self.HG).to_networkx()
-            nx.draw(G, node_size=50)
-            plt.show()
-        else:
-            plt.subplots(figsize=size)
-            hnx.draw(self.HG, **{'layout_kwargs': {'seed': 39}})
-            plt.show()
-
-    def plot_partitions_conductance(self, size=(20, 10)) -> None:
-        """Disegna un grafico che rappresenta la conduttanza delle partizioni"""
-        plt.subplots(figsize=size)
-        cond = self.partitions_conductance()
-        seq = []
-        values = []
-        for i, c in enumerate(cond):
-            seq.append(i)
-            values.append(c)
-        plt.bar(seq, values)
-        plt.title("Conductance")
-        plt.xlabel("Partition")
-        plt.ylabel("Conductance")
-        plt.show()
-
-    def plot_n_between_centrality(self, n: int = 1, size=(20, 10)) -> None:
-        """
-        Disegna un grafico che rappresenta la n-between-centrality dei nucleotidi
-        :param n: connectedness requirement
-        """
-        plt.subplots(figsize=size)
-        centrality = self.s_between_centrality()
-        seq = list(centrality.keys())
-        centr = list(centrality.values())
-
-        plt.bar(seq, centr)
-        plt.title(f"{n}-centrality")
-        plt.xlabel("Nucleotides")
-        plt.ylabel("Centrality")
-        plt.show()
+        centrality = hnx.algorithms.s_betweenness_centrality(self.HG, n)
+        if plot:
+            self.__plotter.plot_n_between_centrality(centrality, n=n, size=plot_size)
+        return centrality
 
     def connection_differences(self, hypergraph: hnx.Hypergraph):
         """
@@ -170,8 +138,9 @@ class TemperatureFoldingStats(TemporalRnaStats):
 
     def __init__(self, THG: TemperatureFoldingHypergraph) -> None:
         self.THG = THG
+        self.__plotter = TemperatureFoldingStatsPlotter()
 
-    def get_nucleotide_sensibility_to_changes(self, start_temp: int, end_temp: int):
+    def get_nucleotide_sensibility_to_changes(self, start_temp: int, end_temp: int, plot=False, plot_size=(20, 10)):
         self.THG.insert_temperature_range(start_temp, end_temp)
         counts = defaultdict(int)
         h1 = self.THG.get_hypergraph(start_temp)
@@ -183,17 +152,9 @@ class TemperatureFoldingStats(TemporalRnaStats):
             elements = st.get_nucleotides_change_structure(h2)
             for elem in elements:
                 counts[elem] += 1
+        if plot:
+            self.__plotter.plot_nucleotide_sensibility_to_changes(counts, start_temp, end_temp, size=plot_size)
         return counts
-
-    def plot_nucleotide_sensibility_to_changes(self, start_temp, end_temp, size=(20, 10)):
-        sens = self.get_nucleotide_sensibility_to_changes(start_temp, end_temp)
-        ordered_keys = sorted(sens.keys())
-        ordered_values = [sens[key] for key in ordered_keys]
-        seq = list(ordered_keys)
-        centr = list(ordered_values)
-        plt.subplots(figsize=size)
-        plt.bar(seq, centr)
-        plt.show()
 
     def get_structure_differences(self, start_temp, end_temp):
         self.THG.insert_temperature_range(start_temp, end_temp)
@@ -205,3 +166,59 @@ class TemperatureFoldingStats(TemporalRnaStats):
             elements = st.structure_differences(h2)
             diffs[temp] = elements
         return diffs
+
+
+class RnaStatsPlotter:
+
+    def plot_hypergraph(self, HG: hnx.Hypergraph, size) -> None:
+        """Disegna un grafico che rappresenta l'ipergrafo costruito"""
+        if len(HG.nodes) > 250:
+            plt.subplots(figsize=size)
+            G = hmod.two_section(HG).to_networkx()
+            nx.draw(G, node_size=50)
+            plt.show()
+        else:
+            plt.subplots(figsize=size)
+            hnx.draw(HG, **{'layout_kwargs': {'seed': 39}})
+            plt.show()
+
+    def plot_partitions_conductance(self, conductances, size=(20, 10)) -> None:
+        """Disegna un grafico che rappresenta la conduttanza delle partizioni"""
+        plt.subplots(figsize=size)
+        seq = []
+        values = []
+        for i, c in enumerate(conductances):
+            seq.append(i)
+            values.append(c)
+        plt.bar(seq, values)
+        plt.title("Conductance")
+        plt.xlabel("Partition")
+        plt.ylabel("Conductance")
+        plt.show()
+
+    def plot_n_between_centrality(self, centrality, n: int = 1, size=(20, 10)) -> None:
+        """
+        Disegna un grafico che rappresenta la n-between-centrality dei nucleotidi
+        :param n: connectedness requirement
+        """
+        plt.subplots(figsize=size)
+        seq = list(centrality.keys())
+        centr = list(centrality.values())
+
+        plt.bar(seq, centr)
+        plt.title(f"{n}-centrality")
+        plt.xlabel("Nucleotides")
+        plt.ylabel("Centrality")
+        plt.show()
+
+
+class TemperatureFoldingStatsPlotter:
+
+    def plot_nucleotide_sensibility_to_changes(self, sensibilities, start_temp, end_temp, size=(20, 10)):
+        ordered_keys = sorted(sensibilities.keys())
+        ordered_values = [sensibilities[key] for key in ordered_keys]
+        seq = list(ordered_keys)
+        centr = list(ordered_values)
+        plt.subplots(figsize=size)
+        plt.bar(seq, centr)
+        plt.show()
