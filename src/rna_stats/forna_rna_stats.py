@@ -128,6 +128,8 @@ class RnaStats(RnaHypergraphStats):
         Restituisce un dizionario che indica le strutture aggiunte o rimosse dall'ipergrafo preso in input
         :param hypergraph : ipergrafo da mettere a confronto
         """
+        if self.HG is hypergraph:
+            return {}
         if len(self.HG.nodes) != len(hypergraph.nodes):
             raise Exception("Ipergrafi hanno un numero diverso di nodi")
         this_structures = self.secondary_structures()
@@ -163,18 +165,18 @@ class RnaStats(RnaHypergraphStats):
 
         return [element for row in differences for element in row]
 
+
 class TemperatureFoldingStats(TemporalRnaStats):
 
     def __init__(self, THG: TemperatureFoldingHypergraph) -> None:
         self.THG = THG
 
-    def get_nucleotide_sensibility_to_changes(self, start_temp: int, end_temp: int) -> dict:
-        """Misura la sensibilità al cambiamento di struttura dei nucleotidi in un range di temperatura"""
+    def get_nucleotide_sensibility_to_changes(self, start_temp: int, end_temp: int):
         self.THG.insert_temperature_range(start_temp, end_temp)
         counts = defaultdict(int)
-        for temp in range(start_temp, end_temp):
-            h1 = self.THG.get_hypergraph(temp)
-            h2 = self.THG.get_hypergraph(temp + 1)
+        h1 = self.THG.get_hypergraph(start_temp)
+        for temp in range(start_temp + 1, end_temp + 1):
+            h2 = self.THG.get_hypergraph(temp)
             if h1 is h2:
                 continue
             st = RnaStats(h1)
@@ -196,12 +198,10 @@ class TemperatureFoldingStats(TemporalRnaStats):
     def get_structure_differences(self, start_temp, end_temp):
         self.THG.insert_temperature_range(start_temp, end_temp)
         diffs = {}
-        for temp in range(start_temp, end_temp):
-            h1 = self.THG.get_hypergraph(temp)
-            h2 = self.THG.get_hypergraph(temp + 1)
-            if h1 is h2:
-                continue
+        h1 = self.THG.get_hypergraph(start_temp)
+        for temp in range(start_temp + 1, end_temp + 1):
+            h2 = self.THG.get_hypergraph(temp)
             st = RnaStats(h1)
             elements = st.structure_differences(h2)
-            diffs[(temp, temp + 1)] = elements
+            diffs[temp] = elements
         return diffs
