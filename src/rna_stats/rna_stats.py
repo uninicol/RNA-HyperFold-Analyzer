@@ -36,7 +36,7 @@ class RnaHypergraphStats(ABC):
         pass
 
     @abstractmethod
-    def n_between_centrality(self, s: int = 1) -> dict:
+    def s_between_centrality(self, s: int = 1) -> dict:
         """
         Restituisce la n-between-centrality dei nucleotidi nella temperatura selezionata
         :param s: connectedness requirement

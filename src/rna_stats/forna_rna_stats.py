@@ -13,6 +13,8 @@ class RnaStats(RnaHypergraphStats):
     """Classe che raccoglie delle statistiche su una sequenza di RNA utilizzando un ipergrafo"""
 
     def __init__(self, HG: hnx.Hypergraph) -> None:
+        if HG is None:
+            raise Exception("None not valid")
         self.HG = HG
         self.__partitions: list = []
         self.__plotter = RnaStatsPlotter()
@@ -72,17 +74,17 @@ class RnaStats(RnaHypergraphStats):
             self.__plotter.plot_partitions_conductance(conductances, size=plot_size)
         return conductances
 
-    def n_between_centrality(self, n=1, plot=False, plot_size=(20, 10)) -> dict:
+    def s_between_centrality(self, s=1, plot=False, plot_size=(20, 10)) -> dict:
         """
         Restituisce la n-between-centrality dei nucleotidi
-        :param n: connectedness requirement
+        :param s: connectedness requirement
         :param plot: indica se fare il grafico della conduttanza
         :param plot_size: se viene richiesto il grafico, definisce la sua grandezza
         :return: la n-between-centrality dei nucleotidi
         """
-        centrality = hnx.algorithms.s_betweenness_centrality(self.HG, n)
+        centrality = hnx.algorithms.s_betweenness_centrality(self.HG, s)
         if plot:
-            self.__plotter.plot_n_between_centrality(centrality, n=n, size=plot_size)
+            self.__plotter.plot_s_between_centrality(centrality, s=s, size=plot_size)
         return centrality
 
     def connection_differences(self, hypergraph: hnx.Hypergraph):
@@ -218,17 +220,17 @@ class RnaStatsPlotter:
         plt.ylabel("Conductance")
         plt.show()
 
-    def plot_n_between_centrality(self, centrality, n: int = 1, size=(20, 10)) -> None:
+    def plot_s_between_centrality(self, centrality, s: int = 1, size=(20, 10)) -> None:
         """
         Disegna un grafico che rappresenta la n-between-centrality dei nucleotidi
-        :param n: connectedness requirement
+        :param s: connectedness requirement
         """
         plt.subplots(figsize=size)
         seq = list(centrality.keys())
         centr = list(centrality.values())
 
         plt.bar(seq, centr)
-        plt.title(f"{n}-centrality")
+        plt.title(f"{s}-centrality")
         plt.xlabel("Nucleotides")
         plt.ylabel("Centrality")
         plt.show()
