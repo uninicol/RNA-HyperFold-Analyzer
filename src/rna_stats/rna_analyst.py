@@ -6,11 +6,11 @@ import matplotlib.pyplot as plt
 import networkx as nx
 
 from hypergraph_folding.temperature_hypergraph import TemperatureFoldingHypergraph
-from rna_stats.rna_stats import RnaHypergraphStats, TemporalRnaStats
+from rna_stats.hypergraph_analysis import StructuralHypergraphAnalysis, CommunityHypergraphAnalysis, TemporalRnaStats
 
 
-class RnaStats(RnaHypergraphStats):
-    """Classe che raccoglie delle statistiche su una sequenza di RNA utilizzando un ipergrafo"""
+class RnaAnalyst(StructuralHypergraphAnalysis, CommunityHypergraphAnalysis):
+    """Classe che raccoglie metodi di analisi per una sequenza di RNA utilizzando un ipergrafo"""
 
     def __init__(self, HG: hnx.Hypergraph) -> None:
         if HG is None:
@@ -108,7 +108,7 @@ class RnaStats(RnaHypergraphStats):
         if len(self.HG.nodes) != len(hypergraph.nodes):
             raise Exception("Ipergrafi hanno un numero diverso di nodi")
         this_structures = self.secondary_structures()
-        other_structures = RnaStats(hypergraph).secondary_structures()
+        other_structures = RnaAnalyst(hypergraph).secondary_structures()
 
         this_count = defaultdict(int)
         for name in this_structures.keys():
@@ -129,7 +129,7 @@ class RnaStats(RnaHypergraphStats):
         if len(self.HG.nodes) != len(hypergraph.nodes):
             raise Exception("Ipergrafi non hanno lo stesso numero di nucleotidi")
         this_structures = self.secondary_structures()
-        other_structures = RnaStats(hypergraph).secondary_structures()
+        other_structures = RnaAnalyst(hypergraph).secondary_structures()
         differences = []
         # Scorro le strutture dei due ipergrafi e individuo i nucleotidi che cambiano struttura
         for this_name, this_structure in this_structures.items():
@@ -163,7 +163,7 @@ class TemperatureFoldingStats(TemporalRnaStats):
             h2 = self.THG.get_hypergraph(temp)
             if h1 is h2:
                 continue
-            st = RnaStats(h1)
+            st = RnaAnalyst(h1)
             elements = st.get_nucleotides_change_structure(h2)
             for elem in elements:
                 counts[elem] += 1
@@ -183,7 +183,7 @@ class TemperatureFoldingStats(TemporalRnaStats):
         h1 = self.THG.get_hypergraph(start_temp)
         for temp in range(start_temp + 1, end_temp + 1):
             h2 = self.THG.get_hypergraph(temp)
-            st = RnaStats(h1)
+            st = RnaAnalyst(h1)
             elements = st.structure_differences(h2)
             diffs[temp] = elements
         return diffs
