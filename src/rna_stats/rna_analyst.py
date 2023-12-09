@@ -74,7 +74,7 @@ class RnaAnalyst(StructuralHypergraphAnalysis, CommunityHypergraphAnalysis):
             self.__plotter.plot_partitions_conductance(conductances, size=plot_size)
         return conductances
 
-    def s_between_centrality(self, s=1, plot=False, plot_size=(20, 10)) -> dict:
+    def s_between_centrality(self, s=1, edges=False, plot=False, plot_size=(20, 10)) -> dict:
         """
         Restituisce la n-between-centrality dei nucleotidi
         :param s: connectedness requirement
@@ -82,7 +82,7 @@ class RnaAnalyst(StructuralHypergraphAnalysis, CommunityHypergraphAnalysis):
         :param plot_size: se viene richiesto il grafico, definisce la sua grandezza
         :return: la n-between-centrality dei nucleotidi
         """
-        centrality = hnx.algorithms.s_betweenness_centrality(self.HG, s)
+        centrality = hnx.algorithms.s_betweenness_centrality(self.HG, s, edges=edges)
         if plot:
             self.__plotter.plot_s_between_centrality(centrality, s=s, size=plot_size)
         return centrality
@@ -226,8 +226,8 @@ class RnaStatsPlotter:
         :param s: connectedness requirement
         """
         plt.subplots(figsize=size)
-        seq = list(centrality.keys())
-        centr = list(centrality.values())
+        seq = sorted(centrality.keys())
+        centr = {k: centrality[k] for k in seq}.values()
 
         plt.bar(seq, centr)
         plt.title(f"{s}-centrality")
