@@ -23,6 +23,9 @@ class RnaAnalyst(StructuralHypergraphAnalysis, CommunityHypergraphAnalysis):
         """Disegna un grafico che rappresenta l'ipergrafo costruito"""
         self.__plotter.plot_hypergraph(self.HG, size)
 
+    def plot_structures(self):
+        self.__plotter.plot_structures(self.secondary_structures())
+
     def secondary_structures(self) -> dict:
         """Restituisce le strutture secondarie rilevate"""
         structures = {}
@@ -206,6 +209,10 @@ class RnaStatsPlotter:
             hnx.draw(HG, **{'layout_kwargs': {'seed': 39}})
             plt.show()
 
+    def plot_structures(self, structures):
+        HG = hnx.Hypergraph(structures)
+        hnx.draw(HG)
+
     def plot_partitions_conductance(self, conductances, size=(20, 10)) -> None:
         """Disegna un grafico che rappresenta la conduttanza delle partizioni"""
         plt.subplots(figsize=size)
@@ -245,4 +252,7 @@ class TemperatureFoldingStatsPlotter:
         centr = list(ordered_values)
         plt.subplots(figsize=size)
         plt.bar(seq, centr)
+        plt.title(f"Nucleotide sensibility")
+        plt.xlabel("Nucleotides")
+        plt.ylabel("Sensibility")
         plt.show()
