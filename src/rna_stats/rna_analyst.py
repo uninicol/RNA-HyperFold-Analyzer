@@ -1,4 +1,5 @@
 from collections import defaultdict
+from statistics import mean
 
 import hypernetx as hnx
 import hypernetx.algorithms.hypergraph_modularity as hmod
@@ -81,11 +82,11 @@ class RnaAnalyst(StructuralHypergraphAnalysis, CommunityHypergraphAnalysis):
         """
         Restituisce la n-between-centrality dei nucleotidi
         :param s: connectedness requirement
-        :param plot: indica se fare il grafico della conduttanza
+        :param plot: indica se fare stampare il grafico
         :param plot_size: se viene richiesto il grafico, definisce la sua grandezza
         :return: la n-between-centrality dei nucleotidi
         """
-        centrality = hnx.algorithms.s_betweenness_centrality(self.HG, s, edges=edges)
+        centrality = hnx.algorithms.s_betweenness_centrality(self.HG, s=s, edges=edges)
         if plot:
             self.__plotter.plot_s_between_centrality(centrality, s=s, size=plot_size)
         return centrality
@@ -95,11 +96,25 @@ class RnaAnalyst(StructuralHypergraphAnalysis, CommunityHypergraphAnalysis):
         Restituisce le differenze di connessione nucleotide-nucleotide
         :param hypergraph : ipergrafo da mettere a confronto
         """
+        if self.HG is hypergraph:
+            return [],[]
         if len(self.HG.nodes) != len(hypergraph.nodes):
             raise Exception("Ipergrafi hanno un numero diverso di nodi")
-        this_connections = [v for k, v in self.HG.incidence_dict.items() if k[0:2] == 'db']
-        other_connections = [v for k, v in hypergraph.incidence_dict.items() if k[0:2] == 'db']
-        return [item for item in this_connections if item not in other_connections]
+        this_connections = [tuple(v) for k, v in self.HG.incidence_dict.items() if k[0:2] == 'db']
+        other_connections = [tuple(v) for k, v in hypergraph.incidence_dict.items() if k[0:2] == 'db']
+
+        t = set(this_connections)
+        o = set(other_connections)
+        new_connections = o - t
+        #new_connections =  [item for other in other_connections for item in this_connections if item not in other_connections]
+        if len(new_connections) == 0:
+            return [],[]
+        old_connections = set()
+        for this in this_connections:
+            for new in new_connections:
+                if new[0] == this[0]:
+                    old_connections.add(this)
+        return new_connections, old_connections
 
     def structure_differences(self, hypergraph: hnx.Hypergraph) -> dict:
         """
@@ -153,7 +168,7 @@ class TemperatureFoldingStats(TemporalRnaStats):
     def get_nucleotide_sensibility_to_changes(self, start_temp: int, end_temp: int, plot=False,
                                               plot_size: tuple = (20, 10)) -> dict:
         """
-        Restituisce un dizionario che indica, per ogni nucleotide, quante volte ha cambiato struttura in un range di temperature
+        Restituisce un dizionario che indica, per ogni nucleotide, la sua sensibilità a cambiare struttura in un range di temperature
         :param start_temp: la temperatura iniziale
         :param end_temp: la temperatura finale
         :param plot: indica se fare il grafico della conduttanza
@@ -170,11 +185,13 @@ class TemperatureFoldingStats(TemporalRnaStats):
             elements = st.get_nucleotides_change_structure(h2)
             for elem in elements:
                 counts[elem] += 1
+        for k, v in counts.items():
+            counts[k] = v / (end_temp - start_temp)
         if plot:
             self.__plotter.plot_nucleotide_sensibility_to_changes(counts, size=plot_size)
         return counts
 
-    def get_structure_differences(self, start_temp, end_temp):
+    def get_structure_differences(self, start_temp, end_temp, plot=False):
         """
         Restituisce un dizionario contenente il numero di strutture create o rimosse in un range di temperature dalla
         temperatura di partenza
@@ -189,6 +206,23 @@ class TemperatureFoldingStats(TemporalRnaStats):
             st = RnaAnalyst(h1)
             elements = st.structure_differences(h2)
             diffs[temp] = elements
+
+        if plot:
+            self.__plotter.plot_structure_differences(diffs)
+        return diffs
+
+    def get_connection_differences(self, start_temp, end_temp, plot = False):
+        self.THG.insert_temperature_range(start_temp, end_temp)
+        diffs = {}
+        h1 = self.THG.get_hypergraph(start_temp)
+        st = RnaAnalyst(h1)
+        for temp in range(start_temp + 1, end_temp + 1):
+            h2 = self.THG.get_hypergraph(temp)
+            elements = st.connection_differences(h2)
+            diffs[temp] = elements
+
+        if plot:
+            self.__plotter.plot_connection_differences(diffs, len(h1.nodes))
         return diffs
 
 
@@ -233,8 +267,8 @@ class RnaStatsPlotter:
         :param s: connectedness requirement
         """
         plt.subplots(figsize=size)
-        seq = sorted(centrality.keys())
-        centr = {k: centrality[k] for k in seq}.values()
+        seq = list(centrality.keys())
+        centr = list(centrality.values())
 
         plt.bar(seq, centr)
         plt.title(f"{s}-centrality")
@@ -252,7 +286,46 @@ class TemperatureFoldingStatsPlotter:
         centr = list(ordered_values)
         plt.subplots(figsize=size)
         plt.bar(seq, centr)
-        plt.title(f"Nucleotide sensibility")
-        plt.xlabel("Nucleotides")
-        plt.ylabel("Sensibility")
+        plt.show()
+
+    def plot_structure_differences(self, diffs):
+        positives = defaultdict(list)
+        negatives = defaultdict(list)
+        for dic in diffs.values():
+            for k, v in dic.items():
+                if v > 0:
+                    positives[k].append(v)
+                else:
+                    negatives[k].append(v)
+
+        structures = sorted(positives.keys())
+        positives = {k: (mean(positives[k]) if len(positives[k])>0 else 0) for k in structures }.values()
+        negatives = {k: (mean(negatives[k]) if len(negatives[k])>0 else 0) for k in structures }.values()
+        fig = plt.figure()
+        ax = plt.subplot(111)
+        ax.bar(structures, negatives, width=1, color='r')
+        ax.bar(structures, positives, width=1, color='b')
+        fig.show()
+
+    def plot_connection_differences(self, diffs, axis_length):
+        def draw_arrow(plt, arr_start, arr_end):
+            dx = arr_end[0] - arr_start[0]
+            dy = arr_end[1] - arr_start[1]
+            plt.arrow(arr_start[0], arr_start[1], dx, dy, head_width=0.03, head_length=0.03, length_includes_head=True, color='black')
+        # TODO optimize
+        new = sorted(list({tup for v in diffs.values() for tup in v[0]}), key=lambda x:x[0])
+        old = sorted(list({tup for v in diffs.values() for tup in v[1]}), key=lambda x:x[0])
+        print(f"{len(old)=}")
+        print(f"{len(new)=}")
+
+        for i in range(len(new)):
+            draw_arrow(plt, old[i], new[i])
+        plt.scatter(*zip(*new), edgecolors='r')
+        plt.scatter(*zip(*old), edgecolors='b')
+
+        plt.title("Connection Difference")
+        plt.xlabel("Nucleotide")
+        #plt.xlim(0, axis_length)
+        plt.ylabel("Number of changes")
+        #plt.ylim(0, axis_length)
         plt.show()
