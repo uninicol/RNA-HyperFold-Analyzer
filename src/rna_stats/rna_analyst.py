@@ -88,7 +88,7 @@ class RnaAnalyst(StructuralHypergraphAnalysis, CommunityHypergraphAnalysis):
         """
         centrality = hnx.algorithms.s_betweenness_centrality(self.HG, s=s, edges=edges)
         if plot:
-            self.__plotter.plot_s_between_centrality(centrality, s=s, size=plot_size)
+            self.__plotter.plot_s_between_centrality(centrality,edges,   s=s, size=plot_size)
         return centrality
 
     def connection_differences(self, hypergraph: hnx.Hypergraph):
@@ -176,19 +176,20 @@ class TemperatureFoldingStats(TemporalRnaStats):
         """
         self.THG.insert_temperature_range(start_temp, end_temp)
         counts = defaultdict(int)
-        h1 = self.THG.get_hypergraph(start_temp)
-        for temp in range(start_temp + 1, end_temp + 1):
-            h2 = self.THG.get_hypergraph(temp)
+        for temp in range(start_temp + 1, end_temp ):
+            h1 = self.THG.get_hypergraph(temp)
+            h2 = self.THG.get_hypergraph(temp +1 )
             if h1 is h2:
                 continue
             st = RnaAnalyst(h1)
             elements = st.get_nucleotides_change_structure(h2)
             for elem in elements:
                 counts[elem] += 1
-        for k, v in counts.items():
-            counts[k] = v / (end_temp - start_temp)
+        #for k, v in counts.items():
+         #   counts[k] = v / (end_temp - start_temp)
         if plot:
             self.__plotter.plot_nucleotide_sensibility_to_changes(counts, size=plot_size)
+        # TODO fare in modo di vedere effettivamente struttura di partenza e di arriv
         return counts
 
     def get_structure_differences(self, start_temp, end_temp, plot=False):
@@ -222,7 +223,7 @@ class TemperatureFoldingStats(TemporalRnaStats):
             diffs[temp] = elements
 
         if plot:
-            self.__plotter.plot_connection_differences(diffs, len(h1.nodes))
+            self.__plotter.plot_connection_differences(diffs)
         return diffs
 
 
@@ -256,17 +257,21 @@ class RnaStatsPlotter:
             seq.append(i)
             values.append(c)
         plt.bar(seq, values)
-        plt.title("Conductance")
+        plt.title("Partitions Conductance")
         plt.xlabel("Partition")
-        plt.ylabel("Conductance")
+        plt.ylabel("Conductance score")
         plt.show()
 
-    def plot_s_between_centrality(self, centrality, s: int = 1, size=(20, 10)) -> None:
+    def plot_s_between_centrality(self, centrality, edges, s: int = 1, size=(20, 10)) -> None:
         """
         Disegna un grafico che rappresenta la n-between-centrality dei nucleotidi
         :param s: connectedness requirement
         """
         plt.subplots(figsize=size)
+        if edges:
+            centrality = {k: v for k, v in sorted(centrality.items())}
+            plt.xticks(rotation=90)
+
         seq = list(centrality.keys())
         centr = list(centrality.values())
 
@@ -286,6 +291,9 @@ class TemperatureFoldingStatsPlotter:
         centr = list(ordered_values)
         plt.subplots(figsize=size)
         plt.bar(seq, centr)
+        plt.title("Nucleotide Sensibility")
+        plt.xlabel("Nucleotides")
+        plt.ylabel("Sensibility score")
         plt.show()
 
     def plot_structure_differences(self, diffs):
@@ -303,11 +311,14 @@ class TemperatureFoldingStatsPlotter:
         negatives = {k: (mean(negatives[k]) if len(negatives[k])>0 else 0) for k in structures }.values()
         fig = plt.figure()
         ax = plt.subplot(111)
-        ax.bar(structures, negatives, width=1, color='r')
-        ax.bar(structures, positives, width=1, color='b')
+        ax.bar(structures, negatives, color='r')
+        ax.bar(structures, positives, color='b', bottom = 0)
+        plt.title("Structure Differences")
+        plt.xlabel("Structure")
+        plt.ylabel("Structures added/removed")
         fig.show()
 
-    def plot_connection_differences(self, diffs, axis_length):
+    def plot_connection_differences(self, diffs):
         def draw_arrow(plt, arr_start, arr_end):
             dx = arr_end[0] - arr_start[0]
             dy = arr_end[1] - arr_start[1]
@@ -323,9 +334,7 @@ class TemperatureFoldingStatsPlotter:
         plt.scatter(*zip(*new), edgecolors='r')
         plt.scatter(*zip(*old), edgecolors='b')
 
-        plt.title("Connection Difference")
+        plt.title("Connection Differences")
         plt.xlabel("Nucleotide")
-        #plt.xlim(0, axis_length)
         plt.ylabel("Number of changes")
-        #plt.ylim(0, axis_length)
         plt.show()
