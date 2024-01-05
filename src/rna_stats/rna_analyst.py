@@ -315,22 +315,7 @@ class TemperatureFoldingStatsPlotter:
         plt.show()
 
     def plot_structure_differences(self, diffs):
-        positives = defaultdict(list)
-        negatives = defaultdict(list)
-        for dic in diffs.values():
-            for k, v in dic.items():
-                if v > 0:
-                    positives[k].append(v)
-                else:
-                    negatives[k].append(v)
-
-        structures = sorted(positives.keys())
-        positives = {
-            k: (mean(positives[k]) if len(positives[k]) > 0 else 0) for k in structures
-        }.values()
-        negatives = {
-            k: (mean(negatives[k]) if len(negatives[k]) > 0 else 0) for k in structures
-        }.values()
+        negatives, positives, structures = self.__compute_number_of_structures(diffs)
         fig = plt.figure()
         ax = plt.subplot(111)
         ax.bar(structures, negatives, color="r")
@@ -339,6 +324,24 @@ class TemperatureFoldingStatsPlotter:
         plt.xlabel("Structure")
         plt.ylabel("Structures added/removed")
         fig.show()
+
+    def __compute_number_of_structures(self, diffs):
+        positives = defaultdict(list)
+        negatives = defaultdict(list)
+        for dic in diffs.values():
+            for k, v in dic.items():
+                if v > 0:
+                    positives[k].append(v)
+                else:
+                    negatives[k].append(v)
+        structures = sorted(positives.keys())
+        positives = {
+            k: (mean(positives[k]) if len(positives[k]) > 0 else 0) for k in structures
+        }.values()
+        negatives = {
+            k: (mean(negatives[k]) if len(negatives[k]) > 0 else 0) for k in structures
+        }.values()
+        return negatives, positives, structures
 
     def plot_connection_differences(self, diffs):
         def draw_arrow(plt, arr_start, arr_end):
@@ -349,8 +352,8 @@ class TemperatureFoldingStatsPlotter:
                 arr_start[1],
                 dx,
                 dy,
-                head_width=0.03,
-                head_length=0.03,
+                head_width=0.22,
+                head_length=0.22,
                 length_includes_head=True,
                 color="black",
             )
@@ -358,6 +361,16 @@ class TemperatureFoldingStatsPlotter:
         def draw_cross(plt, point, color):
             plt.plot(point[0], point[1], marker="x", color=color)
 
+        self.__plot_changed_connections(diffs, draw_arrow)
+        self.__plot_deleted_connections(diffs, draw_cross)
+        self.__plot_created_connections(diffs, draw_cross)
+
+        plt.title("Connection Differences")
+        plt.xlabel("Nucleotide")
+        plt.ylabel("Number of changes")
+        plt.show()
+
+    def __plot_changed_connections(self, diffs, draw_arrow):
         changes = defaultdict(dict)
         for temp, conn in diffs.items():
             new = conn[1]
@@ -365,41 +378,34 @@ class TemperatureFoldingStatsPlotter:
                 n = [n for n in new if n[0] == o[0]]
                 if len(n) != 0:
                     changes[temp][o] = n[0]
-
         old = []
         new = []
         for temp, conn in changes.items():
             for o, n in conn.items():
                 old.append(o)
                 new.append(n)
-
         for i in range(len(new)):
             draw_arrow(plt, old[i], new[i])
         if len(new) > 0:
             plt.scatter(*zip(*old), edgecolors="b")
             plt.scatter(*zip(*new), edgecolors="r")
 
-        deleted_connections = defaultdict(list)
-        for temp, conn in diffs.items():
-            for old in conn[0]:
-                if old[0] not in [new[0] for new in conn[1]]:
-                    deleted_connections[temp].append(old)
-
-        deleted = [tup for _, conn in deleted_connections.items() for tup in conn]
-        for point in deleted:
-            draw_cross(plt, point, "red")
-
+    def __plot_created_connections(self, diffs, draw_cross):
         created_connections = defaultdict(list)
         for temp, conn in diffs.items():
             for new in conn[1]:
                 if new[0] not in [old[0] for old in conn[0]]:
                     created_connections[temp].append(new)
-
-        created = [tup for _, conn in created_connections.items() for tup in conn]
+        created = {tup for _, conn in created_connections.items() for tup in conn}
         for point in created:
             draw_cross(plt, point, "blue")
 
-        plt.title("Connection Differences")
-        plt.xlabel("Nucleotide")
-        plt.ylabel("Number of changes")
-        plt.show()
+    def __plot_deleted_connections(self, diffs, draw_cross):
+        deleted_connections = defaultdict(list)
+        for temp, conn in diffs.items():
+            for old in conn[0]:
+                if old[0] not in [new[0] for new in conn[1]]:
+                    deleted_connections[temp].append(old)
+        deleted = {tup for _, conn in deleted_connections.items() for tup in conn}
+        for point in deleted:
+            draw_cross(plt, point, "red")
