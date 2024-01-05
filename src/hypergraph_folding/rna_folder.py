@@ -1,9 +1,9 @@
 from ViennaRNA import RNA, fold
 
 
-
 class RNAFolder:
     """Classe di configurazione che permette di computare dei folding di sequenze di rna"""
+
     def __init__(self, sequence: str) -> None:
         self.sequence = sequence
 

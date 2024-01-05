@@ -3,7 +3,9 @@ from concurrent.futures.process import ProcessPoolExecutor
 
 import hypernetx as hnx
 
-from incidence_producers.temperature_incidence_producer import TemperatureIncidenceProducer
+from incidence_producers.temperature_incidence_producer import (
+    TemperatureIncidenceProducer,
+)
 
 
 class TemporalHypergraph(ABC):
@@ -107,7 +109,11 @@ class SearchOptimizedFoldingHypergraph(TemporalHypergraph):
 class TemperatureFoldingHypergraph:
     """Classe che permette di computare e memorizzare i folding di diverse temperature"""
 
-    def __init__(self, producer: TemperatureIncidenceProducer, temporal_hypergraph: TemporalHypergraph) -> None:
+    def __init__(
+        self,
+        producer: TemperatureIncidenceProducer,
+        temporal_hypergraph: TemporalHypergraph,
+    ) -> None:
         self.__producer = producer
         self.temperature_HG = temporal_hypergraph
         self.__analyzed_temperatures = set()
@@ -131,10 +137,16 @@ class TemperatureFoldingHypergraph:
             else:
                 self.__analyzed_temperatures.add(temp)
         with ProcessPoolExecutor() as executor:
-            for i, incidence in enumerate(executor.map(self.__producer.get_temperature_incidence_dict, temperatures)):
+            for i, incidence in enumerate(
+                executor.map(
+                    self.__producer.get_temperature_incidence_dict, temperatures
+                )
+            ):
                 self.temperature_HG.add_incidence_dict(incidence, temperatures[i])
 
-    def insert_temperature_range(self, start_temperature: int, end_temperature: int, step: int = 1):
+    def insert_temperature_range(
+        self, start_temperature: int, end_temperature: int, step: int = 1
+    ):
         temperatures = list(range(start_temperature, end_temperature + 1, step))
         self.insert_temperatures(temperatures)
 

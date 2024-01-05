@@ -5,7 +5,9 @@ import forgi
 
 from hypergraph_folding.rna_folder import RNAFolder
 from incidence_producers.connector import Connector
-from incidence_producers.temperature_incidence_producer import TemperatureIncidenceProducer
+from incidence_producers.temperature_incidence_producer import (
+    TemperatureIncidenceProducer,
+)
 
 
 class ViennaIncidenceProducer(TemperatureIncidenceProducer, Connector):
@@ -17,7 +19,6 @@ class ViennaIncidenceProducer(TemperatureIncidenceProducer, Connector):
         self.sequence: str = folder.sequence
         self.dotbracket: str = None
         self.incidence_dict: defaultdict = defaultdict(list)
-
 
     def get_temperature_incidence_dict(self, temperature: int) -> dict:
         """
@@ -34,14 +35,14 @@ class ViennaIncidenceProducer(TemperatureIncidenceProducer, Connector):
 
     def connect_to_next(self) -> None:
         """Collega ogni nucleotide con il suo successivo"""
-        edge :int= 0
+        edge: int = 0
         for i in range(len(self.dotbracket) - 1):
             self.incidence_dict[f"l_{edge}"] = [i, i + 1]
             edge += 1
 
     def dotbracket_connections(self) -> None:
         """Collega i nucleotidi in base alla rappresentazione punto-parentesi"""
-        edge :int = 0
+        edge: int = 0
         stack = deque()
         for i, value in enumerate(self.dotbracket):
             if value == "(":

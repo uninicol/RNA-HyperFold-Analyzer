@@ -3,7 +3,6 @@ import hypernetx as hnx
 
 
 class StructuralHypergraphAnalysis(ABC):
-
     @abstractmethod
     def secondary_structures(self) -> dict:
         """
@@ -47,7 +46,6 @@ class StructuralHypergraphAnalysis(ABC):
 
 
 class CommunityHypergraphAnalysis(ABC):
-
     @abstractmethod
     def modularity(self) -> float:
         """
@@ -75,10 +73,10 @@ class CommunityHypergraphAnalysis(ABC):
 
 
 class TemporalRnaStats(ABC):
-
     @abstractmethod
-    def get_nucleotide_sensibility_to_changes(self, start_temp: int, end_temp: int, plot=False,
-                                              plot_size: tuple = (20, 10)) -> dict:
+    def get_nucleotide_sensibility_to_changes(
+        self, start_temp: int, end_temp: int, plot=False, plot_size: tuple = (20, 10)
+    ) -> dict:
         """
         Restituisce un dizionario che indica, per ogni nucleotide, quante volte ha cambiato struttura in un range di temperature
         :param start_temp: la temperatura iniziale
