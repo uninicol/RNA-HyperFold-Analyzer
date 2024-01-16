@@ -43,7 +43,7 @@ class RnaAnalyst(StructuralHypergraphAnalysis, CommunityHypergraphAnalysis):
     def partitions(self) -> list:
         """Computa delle partizioni dell'ipergrafo"""
         if len(self.__partitions) == 0:
-            self.__partitions = hmod.kumar(self.HG)
+            self.__partitions = sorted(hmod.kumar(self.HG), key=lambda s: min(s))
         return self.__partitions
 
     def partition(self, n: int) -> set:
@@ -203,7 +203,10 @@ class TemperatureFoldingStats(TemporalRnaStats):
         """
         self.THG.insert_temperature_range(start_temp, end_temp)
         counts = defaultdict(int)
-        for changes in self.__executor.map(self.__compute_structure_change, range(start_temp + 1, end_temp)):
+        for temp in range(start_temp + 1, end_temp):
+            changes = self.__compute_structure_change(temp)
+            if changes is None:
+                continue
             for elem in changes:
                 counts[elem] += 1
         # for k, v in counts.items():
@@ -286,7 +289,7 @@ class RnaStatsPlotter:
         plt.subplots(figsize=size)
         seq = []
         values = []
-        for i, c in enumerate(conductances):
+        for i, c in enumerate(conductances, start=1):
             seq.append(i)
             values.append(c)
         plt.bar(seq, values)
