@@ -100,7 +100,7 @@ class RnaAnalyst(StructuralHypergraphAnalysis, CommunityHypergraphAnalysis):
             )
         return centrality
 
-    def connection_differences(self, hypergraph: hnx.Hypergraph):
+    def connection_differences(self, hypergraph: hnx.Hypergraph, plot=False, plot_size=(8, 8)):
         """
         Restituisce le differenze di connessione nucleotide-nucleotide
         :param hypergraph : ipergrafo da mettere a confronto
@@ -125,7 +125,10 @@ class RnaAnalyst(StructuralHypergraphAnalysis, CommunityHypergraphAnalysis):
             if v != other_connections[k]:  # cambia base appaiata
                 old.append((k, v))
                 new.append((k, other_connections[k]))
-
+        if plot:
+            tfsp = TemperatureFoldingStatsPlotter()
+            diffs = {0: (old, new)}
+            tfsp.plot_connection_differences(diffs)
         return old, new
 
     def structure_differences(self, hypergraph: hnx.Hypergraph) -> dict:
