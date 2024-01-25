@@ -28,42 +28,42 @@ class BasicTemporalHypergraph(TemporalHypergraph):
     """Ipergrafo dinamico standard"""
 
     def __init__(self):
-        self.__time_hypergraphs = {}
+        self.__temporal_hypergraph = {}
 
     def add_incidence_dict(self, incidence_dict, time):
         if incidence_dict is None or time is None:
             return
-        self.__time_hypergraphs[time] = hnx.Hypergraph(incidence_dict)
+        self.__temporal_hypergraph[time] = hnx.Hypergraph(incidence_dict)
         pass
 
     def get_time_hypergraph(self, time):
-        return self.__time_hypergraphs[time]
+        return self.__temporal_hypergraph[time]
 
     def time_hypergraph_exists(self, time):
-        return time not in self.__time_hypergraphs.keys()
+        return time not in self.__temporal_hypergraph.keys()
 
 
 class MemoryOptimizedFoldingHypergraph(TemporalHypergraph):
     """Ipergrafo dinamico ottimizzato, sotto il punto di vista della memoria, per i diversi folding dell'rna"""
 
     def __init__(self):
-        self.__time_hypergraphs = {}
+        self.__temporal_hypergraph = {}
 
     def add_incidence_dict(self, incidence_dict, time):
         found = False
-        for temps, HG in self.__time_hypergraphs.items():
+        for temps, HG in self.__temporal_hypergraph.items():
             if incidence_dict == HG.incidence_dict:
                 new_temps = (min(temps[0], time), max(temps[1], time))
-                self.__time_hypergraphs[new_temps] = self.__time_hypergraphs[temps]
-                del self.__time_hypergraphs[temps]
+                self.__temporal_hypergraph[new_temps] = self.__temporal_hypergraph[temps]
+                del self.__temporal_hypergraph[temps]
                 found = True
                 break
         if not found:
-            self.__time_hypergraphs[(time, time)] = hnx.Hypergraph(incidence_dict)
+            self.__temporal_hypergraph[(time, time)] = hnx.Hypergraph(incidence_dict)
         pass
 
     def get_time_hypergraph(self, time):
-        for temps, HG in self.__time_hypergraphs.items():
+        for temps, HG in self.__temporal_hypergraph.items():
             if temps[0] <= time <= temps[1]:
                 return HG
         return None
@@ -75,28 +75,28 @@ class SearchOptimizedFoldingHypergraph(TemporalHypergraph):
     """Ipergrafo dinamico ottimizzato, sotto il punto di vista della velocità di ricerca, per i diversi folding dell'rna"""
 
     def __init__(self):
-        self.__time_hypergraphs = {}
+        self.__temporal_hypergraph = {}
         self.__time_to_set = {}
 
     def add_incidence_dict(self, incidence_dict, time):
         found = False
-        for temps, HG in self.__time_hypergraphs.items():
+        for temps, HG in self.__temporal_hypergraph.items():
             if incidence_dict == HG.incidence_dict:
                 new_temps = temps.union([time])
-                self.__time_hypergraphs[new_temps] = self.__time_hypergraphs[temps]
-                del self.__time_hypergraphs[temps]
+                self.__temporal_hypergraph[new_temps] = self.__temporal_hypergraph[temps]
+                del self.__temporal_hypergraph[temps]
                 for t in new_temps:
                     self.__time_to_set[t] = new_temps
                 found = True
                 break
         if not found:
             new_temp = frozenset([time])
-            self.__time_hypergraphs[new_temp] = hnx.Hypergraph(incidence_dict)
+            self.__temporal_hypergraph[new_temp] = hnx.Hypergraph(incidence_dict)
             self.__time_to_set[time] = new_temp
         pass
 
     def get_time_hypergraph(self, time):
-        return self.__time_hypergraphs[self.__time_to_set[time]]
+        return self.__temporal_hypergraph[self.__time_to_set[time]]
 
     def time_hypergraph_exists(self, time):
         return time in self.__time_to_set.keys()
