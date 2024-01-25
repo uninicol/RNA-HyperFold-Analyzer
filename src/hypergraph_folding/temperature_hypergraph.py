@@ -82,15 +82,15 @@ class SearchOptimizedFoldingHypergraph(TemporalHypergraph):
         found = False
         for temps, HG in self.__temporal_hypergraph.items():
             if incidence_dict == HG.incidence_dict:
-                new_temps = temps.union([time])
+                new_temps = (min(temps[0], time), max(temps[1], time))
                 self.__temporal_hypergraph[new_temps] = self.__temporal_hypergraph[temps]
                 del self.__temporal_hypergraph[temps]
-                for t in new_temps:
+                for t in range(new_temps[0], new_temps[1] + 1):
                     self.__time_to_set[t] = new_temps
                 found = True
                 break
         if not found:
-            new_temp = frozenset([time])
+            new_temp = (time, time)
             self.__temporal_hypergraph[new_temp] = hnx.Hypergraph(incidence_dict)
             self.__time_to_set[time] = new_temp
         pass
