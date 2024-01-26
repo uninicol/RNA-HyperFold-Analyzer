@@ -1,3 +1,4 @@
+import re
 from abc import ABC, abstractmethod
 from concurrent.futures.process import ProcessPoolExecutor
 
@@ -71,6 +72,7 @@ class MemoryOptimizedFoldingHypergraph(TemporalHypergraph):
     def time_hypergraph_exists(self, time):
         return self.get_time_hypergraph(time) is not None
 
+
 class SearchOptimizedFoldingHypergraph(TemporalHypergraph):
     """Ipergrafo dinamico ottimizzato, sotto il punto di vista della velocità di ricerca, per i diversi folding dell'rna"""
 
@@ -101,13 +103,67 @@ class SearchOptimizedFoldingHypergraph(TemporalHypergraph):
     def time_hypergraph_exists(self, time):
         return time in self.__time_to_set.keys()
 
+
+class SingleFoldingHypergraph(TemporalHypergraph):
+    """Ipergrafo dinamico che utilizza un singolo ipergrafo per rappresentare ogni folding, TODO attualmente in sviluppo"""
+
+    def __init__(self):
+        self.__temporal_hypergraph = None
+        self.__analyzed_temperatures = set()
+
+    def add_incidence_dict(self, incidence_dict, time):
+        self.__analyzed_temperatures.add(time)
+        if not self.__temporal_hypergraph:
+            self.__temporal_hypergraph = hnx.Hypergraph(incidence_dict)
+            for h_arc in incidence_dict.keys():
+                self.__temporal_hypergraph.properties['properties'][0][h_arc] = {'temperatures': set()}
+
+        self.__update_hypergraph(incidence_dict, time)
+
+    def __update_hypergraph(self, incidence_dict, time):
+        hyperarc_set = {tuple(n) for n in incidence_dict.values()}
+        for h_arc, nodes in incidence_dict.items():
+            if h_arc.startswith('l'):
+                self.__temporal_hypergraph.properties['properties'][0][h_arc]['temperatures'].add(time)
+                continue
+            if tuple(nodes) in hyperarc_set:
+                for a, n in self.__temporal_hypergraph.incidence_dict.items():
+                    if nodes == n:
+                        self.__temporal_hypergraph.properties['properties'][0][a]['temperatures'].add(time)
+                        break
+            else:
+                connection_name = h_arc.split('_', 1)[0]
+                self.__temporal_hypergraph = self.__add_edge(self.__temporal_hypergraph, connection_name, nodes, time)
+
+    def __add_edge(self, HG: hnx.Hypergraph, name_begins: str, edge: list, temperature: int):
+        last_edge = max((int(match) for string in HG.incidence_dict.keys() for match in re.findall(r'\d+', string)))
+        new_incidence_dict = HG.incidence_dict.copy()
+        new_incidence_dict[f"{name_begins}_{last_edge}"] = edge
+        HG = hnx.Hypergraph(new_incidence_dict)
+        HG.properties['properties'][0][f"{name_begins}_{last_edge}"] = {'temperatures': {temperature}}
+        return HG
+
+    def get_time_hypergraph(self, time):
+        time_incident_dict = {}
+        for h_arc, nodes in self.__temporal_hypergraph.incidence_dict.items():
+            for a, n in self.__temporal_hypergraph.incidence_dict.items():
+                if nodes == n:
+                    if time in self.__temporal_hypergraph.properties['properties'][0][a]['temperatures']:
+                        time_incident_dict[a] = nodes
+                    break
+        return hnx.Hypergraph(time_incident_dict)
+
+    def time_hypergraph_exists(self, time):
+        return time in self.__analyzed_temperatures
+
+
 class TemperatureFoldingHypergraph:
     """Classe che permette di computare e memorizzare i folding di diverse temperature"""
 
     def __init__(
-        self,
-        producer: TemperatureIncidenceProducer,
-        temporal_hypergraph: TemporalHypergraph,
+            self,
+            producer: TemperatureIncidenceProducer,
+            temporal_hypergraph: TemporalHypergraph,
     ) -> None:
         self.__producer = producer
         self.temperature_HG = temporal_hypergraph
@@ -133,14 +189,14 @@ class TemperatureFoldingHypergraph:
                 self.__analyzed_temperatures.add(temp)
         with ProcessPoolExecutor() as executor:
             for i, incidence in enumerate(
-                executor.map(
-                    self.__producer.get_temperature_incidence_dict, temperatures
-                )
+                    executor.map(
+                        self.__producer.get_temperature_incidence_dict, temperatures
+                    )
             ):
                 self.temperature_HG.add_incidence_dict(incidence, temperatures[i])
 
     def insert_temperature_range(
-        self, start_temperature: int, end_temperature: int, step: int = 1
+            self, start_temperature: int, end_temperature: int, step: int = 1
     ):
         temperatures = list(range(start_temperature, end_temperature + 1, step))
         self.insert_temperatures(temperatures)
