@@ -3,9 +3,9 @@ from collections import deque
 
 import forgi
 
-from hypergraph_folding.rna_folder import RNAFolder
-from incidence_producers.connector import Connector
-from incidence_producers.temperature_incidence_producer import (
+from RNAHyperFold.hypergraph_folding.rna_folder import RNAFolder
+from RNAHyperFold.incidence_producers.connector import Connector
+from RNAHyperFold.incidence_producers.temperature_incidence_producer import (
     TemperatureIncidenceProducer,
 )
 

@@ -1,6 +1,6 @@
 from abc import abstractmethod
 
-from incidence_producers.incidence_producer import IncidenceProducer
+from RNAHyperFold.incidence_producers.incidence_producer import IncidenceProducer
 
 
 class TemperatureIncidenceProducer(IncidenceProducer):

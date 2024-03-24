@@ -4,7 +4,7 @@ from concurrent.futures.process import ProcessPoolExecutor
 
 import hypernetx as hnx
 
-from incidence_producers.temperature_incidence_producer import (
+from RNAHyperFold.incidence_producers.temperature_incidence_producer import (
     TemperatureIncidenceProducer,
 )
 

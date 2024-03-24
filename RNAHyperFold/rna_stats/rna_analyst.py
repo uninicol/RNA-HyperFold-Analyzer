@@ -7,8 +7,8 @@ import hypernetx.algorithms.hypergraph_modularity as hmod
 import matplotlib.pyplot as plt
 import networkx as nx
 
-from hypergraph_folding.temperature_hypergraph import TemperatureFoldingHypergraph
-from rna_stats.hypergraph_analysis import (
+from RNAHyperFold.hypergraph_folding.temperature_hypergraph import TemperatureFoldingHypergraph
+from RNAHyperFold.rna_stats.hypergraph_analysis import (
     StructuralHypergraphAnalysis,
     CommunityHypergraphAnalysis,
     TemporalRnaStats,

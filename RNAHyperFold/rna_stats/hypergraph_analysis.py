@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+
 import hypernetx as hnx
 
 
