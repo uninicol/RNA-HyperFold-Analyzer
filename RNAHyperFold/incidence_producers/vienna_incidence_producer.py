@@ -11,10 +11,18 @@ from RNAHyperFold.incidence_producers.temperature_incidence_producer import (
 
 
 class ViennaIncidenceProducer(TemperatureIncidenceProducer, Connector):
-    """Produce un dizionario di incidenza che rappresenta una sequenza di RNA come ipergrafo dato un file json di
-    forna"""
+    """
+    Produce un dizionario di incidenza che rappresenta una sequenza di RNA come ipergrafo
+    dato un file JSON di Forna.
+    """
 
     def __init__(self, folder: RNAFolder) -> None:
+        """
+        Inizializza un'istanza della classe ViennaIncidenceProducer.
+
+        Args:
+            folder (RNAFolder): L'oggetto RNAFolder contenente la sequenza di RNA.
+        """
         self.folder: RNAFolder = folder
         self.sequence: str = folder.sequence
         self.dotbracket: str = None
@@ -22,8 +30,13 @@ class ViennaIncidenceProducer(TemperatureIncidenceProducer, Connector):
 
     def get_temperature_incidence_dict(self, temperature: int) -> dict:
         """
-        Restituisce il dizionario di incidenza
-        :return: il dizionario di incidenza
+        Restituisce il dizionario di incidenza per una data temperatura.
+
+        Args:
+            temperature (int): La temperatura per cui ottenere il dizionario di incidenza.
+
+        Returns:
+            dict: Il dizionario di incidenza.
         """
         self.folder.set_temperature(temperature)
         self.dotbracket = self.folder.get_dot_bracket()
@@ -63,6 +76,12 @@ class ViennaIncidenceProducer(TemperatureIncidenceProducer, Connector):
             self.incidence_dict[struct] = indexes
 
     def get_structures(self) -> dict:
+        """
+        Ottiene le strutture dell'RNA dal file Forna.
+
+        Returns:
+            dict: Un dizionario che rappresenta le strutture dell'RNA.
+        """
         structures_dict = defaultdict(list)
         cg = forgi.load_rna(self.dotbracket, allow_many=False)
         structures = cg.to_element_string(with_numbers=True)

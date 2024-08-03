@@ -7,23 +7,36 @@ from RNAHyperFold.incidence_producers.incidence_producer import IncidenceProduce
 
 
 class FornaIncidenceProducer(IncidenceProducer, Connector):
-    """Produce un dizionario di incidenza che rappresenta una sequenza di RNA come ipergrafo dato un file json di
-    forna"""
+    """
+    Produce un dizionario di incidenza che rappresenta una sequenza di RNA come ipergrafo
+    dato un file JSON di Forna.
+    """
 
     def __init__(self, forna_file_path: str) -> None:
+        """
+        Inizializza un'istanza della classe FornaIncidenceProducer.
+
+        Args:
+            forna_file_path (str): Il percorso del file JSON di Forna.
+        """
         with open(forna_file_path, "r") as json_file:
             self.molecule = json.load(json_file)["rnas"]
             if len(self.molecule.keys()) > 1:
                 print("Warning: solo la prima sequenza verrà considerata")
 
-        self.molecule = self.molecule[next(iter(self.molecule))]
+        self.molecule: str = self.molecule[next(iter(self.molecule))]
         self.incidence_dict: defaultdict = defaultdict(list)
         self.edge: int = 0
 
     def get_incidence_dict(self, node_with_nucleotide: bool = False) -> dict:
         """
-        Restituisce il dizionario di incidenza
-        :return: il dizionario di incidenza
+        Restituisce il dizionario di incidenza.
+
+        Args:
+            node_with_nucleotide (bool): Se True, i nodi includeranno i nucleotidi corrispondenti.
+
+        Returns:
+            dict: Il dizionario di incidenza.
         """
         self.connect_to_next()
         self.dotbracket_connections()
@@ -33,7 +46,7 @@ class FornaIncidenceProducer(IncidenceProducer, Connector):
         return self.incidence_dict
 
     def connect_to_next(self) -> None:
-        """Collega ogni nucleotide con il suo successivo"""
+        """Collega ogni nucleotide con il suo successivo."""
         for i in range(len(self.molecule["dotbracket"]) - 1):
             self.incidence_dict[f"l_{self.edge}"].append(i)
             self.incidence_dict[f"l_{self.edge}"].append(i + 1)

@@ -7,7 +7,9 @@ import hypernetx.algorithms.hypergraph_modularity as hmod
 import matplotlib.pyplot as plt
 import networkx as nx
 
-from RNAHyperFold.hypergraph_folding.temperature_hypergraph import TemperatureFoldingHypergraph
+from RNAHyperFold.hypergraph_folding.temperature_hypergraph import (
+    TemperatureFoldingHypergraph,
+)
 from RNAHyperFold.rna_stats.hypergraph_analysis import (
     StructuralHypergraphAnalysis,
     CommunityHypergraphAnalysis,
@@ -16,9 +18,15 @@ from RNAHyperFold.rna_stats.hypergraph_analysis import (
 
 
 class RnaAnalyst(StructuralHypergraphAnalysis, CommunityHypergraphAnalysis):
-    """Classe che raccoglie metodi di analisi per una sequenza di RNA utilizzando un ipergrafo"""
+    """Classe che raccoglie metodi di analisi per una sequenza di RNA utilizzando un ipergrafo."""
 
     def __init__(self, HG: hnx.Hypergraph) -> None:
+        """
+        Inizializza un'istanza della classe RnaAnalyst.
+
+        Args:
+            HG (hnx.Hypergraph): L'ipergrafo da analizzare.
+        """
         if HG is None:
             raise Exception("None not valid")
         self.HG = HG
@@ -26,14 +34,27 @@ class RnaAnalyst(StructuralHypergraphAnalysis, CommunityHypergraphAnalysis):
         self.__plotter = RnaStatsPlotter()
 
     def plot_hypergraph(self, size: tuple = (40, 40)) -> None:
-        """Disegna un grafico che rappresenta l'ipergrafo costruito"""
+        """
+        Disegna un grafico che rappresenta l'ipergrafo costruito.
+
+        Args:
+            size (tuple): La dimensione del grafico.
+        """
         self.__plotter.plot_hypergraph(self.HG, size)
 
     def plot_structures(self):
+        """
+        Disegna un grafico che rappresenta le strutture secondarie rilevate.
+        """
         self.__plotter.plot_structures(self.secondary_structures())
 
     def secondary_structures(self) -> dict:
-        """Restituisce le strutture secondarie rilevate"""
+        """
+        Restituisce le strutture secondarie rilevate.
+
+        Returns:
+            dict: Il dizionario delle strutture secondarie.
+        """
         structures = {}
         for key, value in self.HG.incidence_dict.items():
             if not key.startswith("l") and not key.startswith("db"):
@@ -41,42 +62,61 @@ class RnaAnalyst(StructuralHypergraphAnalysis, CommunityHypergraphAnalysis):
         return structures
 
     def partitions(self) -> list:
-        """Computa delle partizioni dell'ipergrafo"""
+        """
+        Computa delle partizioni dell'ipergrafo.
+
+        Returns:
+            list: La lista delle partizioni dell'ipergrafo.
+        """
         if len(self.__partitions) == 0:
             self.__partitions = sorted(hmod.kumar(self.HG), key=lambda s: min(s))
         return self.__partitions
 
     def partition(self, n: int) -> set:
         """
-        Restituisce la partizione scelta
-        :param n: numero della partizione
-        :return: la partizione scelta
+        Restituisce la partizione scelta.
+
+        Args:
+            n (int): Numero della partizione.
+
+        Returns:
+            set: La partizione scelta.
         """
         self.partitions()
         return self.__partitions[n]
 
     def modularity(self) -> float:
         """
-        Restituisce la modularità dell'ipergrafo
-        :return: la modularità dell'ipergrafo
+        Restituisce la modularità dell'ipergrafo.
+
+        Returns:
+            float: La modularità dell'ipergrafo.
         """
         self.partitions()
         return hmod.modularity(self.HG, self.__partitions)
 
     def subset_conductance(self, subset: set) -> float:
         """
-        Restituisce la conduttanza di una partizione
-        :param subset: la partizione
-        :return: la conduttanza della partizione
+        Restituisce la conduttanza di una partizione.
+
+        Args:
+            subset (set): La partizione.
+
+        Returns:
+            float: La conduttanza della partizione.
         """
         return hmod.conductance(self.HG, subset)
 
     def partitions_conductance(self, plot=False, plot_size=(20, 10)) -> list[float]:
         """
-        Restituisce la conduttanza di tutte le partizioni
-        :param plot: indica se fare il grafico della conduttanza
-        :param plot_size: se viene richiesto il grafico, definisce la sua grandezza
-        :return: la lista contenente la conduttanza di tutte le partizioni
+        Restituisce la conduttanza di tutte le partizioni.
+
+        Args:
+            plot (bool): Indica se fare il grafico della conduttanza.
+            plot_size (tuple): Se viene richiesto il grafico, definisce la sua grandezza.
+
+        Returns:
+            list[float]: La lista contenente la conduttanza di tutte le partizioni.
         """
         conductances = [self.subset_conductance(subset) for subset in self.partitions()]
         if plot:
@@ -87,11 +127,16 @@ class RnaAnalyst(StructuralHypergraphAnalysis, CommunityHypergraphAnalysis):
         self, s=1, edges=False, plot=False, plot_size=(20, 10)
     ) -> dict:
         """
-        Restituisce la n-between-centrality dei nucleotidi
-        :param s: connectedness requirement
-        :param plot: indica se fare stampare il grafico
-        :param plot_size: se viene richiesto il grafico, definisce la sua grandezza
-        :return: la n-between-centrality dei nucleotidi
+        Restituisce la n-between-centrality dei nucleotidi.
+
+        Args:
+            s (int): Requisito di connessione.
+            edges (bool): Indica se considerare anche gli archi.
+            plot (bool): Indica se fare stampare il grafico.
+            plot_size (tuple): Se viene richiesto il grafico, definisce la sua grandezza.
+
+        Returns:
+            dict: La n-between-centrality dei nucleotidi.
         """
         centrality = hnx.algorithms.s_betweenness_centrality(self.HG, s=s, edges=edges)
         if plot:
@@ -100,10 +145,19 @@ class RnaAnalyst(StructuralHypergraphAnalysis, CommunityHypergraphAnalysis):
             )
         return centrality
 
-    def connection_differences(self, hypergraph: hnx.Hypergraph, plot=False, plot_size=(8, 8)):
+    def connection_differences(
+        self, hypergraph: hnx.Hypergraph, plot=False, plot_size=(8, 8)
+    ):
         """
-        Restituisce le differenze di connessione nucleotide-nucleotide
-        :param hypergraph : ipergrafo da mettere a confronto
+        Restituisce le differenze di connessione nucleotide-nucleotide tra l'ipergrafo corrente e un altro ipergrafo.
+
+        Args:
+            hypergraph (hnx.Hypergraph): L'ipergrafo da mettere a confronto.
+            plot (bool): Indica se fare il grafico delle differenze.
+            plot_size (tuple): Se viene richiesto il grafico, definisce la sua grandezza.
+
+        Returns:
+            tuple[dict, dict]: Due dizionari che rappresentano le connessioni aggiunte e rimosse.
         """
         if self.HG is hypergraph:
             return None
@@ -133,8 +187,13 @@ class RnaAnalyst(StructuralHypergraphAnalysis, CommunityHypergraphAnalysis):
 
     def structure_differences(self, hypergraph: hnx.Hypergraph) -> dict:
         """
-        Restituisce un dizionario che indica le strutture aggiunte o rimosse dall'ipergrafo preso in input
-        :param hypergraph : ipergrafo da mettere a confronto
+        Restituisce un dizionario che indica le strutture aggiunte o rimosse dall'ipergrafo preso in input.
+
+        Args:
+            hypergraph (hnx.Hypergraph): L'ipergrafo da mettere a confronto.
+
+        Returns:
+            dict: Un dizionario che indica le strutture aggiunte o rimosse.
         """
         if self.HG is hypergraph:
             return {}
@@ -159,8 +218,13 @@ class RnaAnalyst(StructuralHypergraphAnalysis, CommunityHypergraphAnalysis):
 
     def get_nucleotides_change_structure(self, hypergraph: hnx.Hypergraph) -> list:
         """
-        Restituisce i nucleotidi che hanno subito un cambiamento di struttura
-        :param hypergraph : ipergrafo da mettere a confronto
+        Restituisce i nucleotidi che hanno subito un cambiamento di struttura.
+
+        Args:
+            hypergraph (hnx.Hypergraph): L'ipergrafo da mettere a confronto.
+
+        Returns:
+            list: La lista dei nucleotidi che hanno cambiato struttura.
         """
         if len(self.HG.nodes) != len(hypergraph.nodes):
             raise Exception("Ipergrafi non hanno lo stesso numero di nucleotidi")
@@ -180,13 +244,29 @@ class RnaAnalyst(StructuralHypergraphAnalysis, CommunityHypergraphAnalysis):
 
 
 class TemperatureFoldingStats(TemporalRnaStats):
+    """Classe che raccoglie metodi di analisi per i folding dell'RNA a diverse temperature."""
+
     def __init__(self, THG: TemperatureFoldingHypergraph) -> None:
+        """
+        Inizializza un'istanza della classe TemperatureFoldingStats.
+
+        Args:
+            THG (TemperatureFoldingHypergraph): L'ipergrafo temporale dei folding dell'RNA.
+        """
         self.THG = THG
         self.__plotter = TemperatureFoldingStatsPlotter()
         self.__executor = ProcessPoolExecutor()
 
+    def __compute_structure_change(self, temp: int) -> list:
+        """
+        Computa i cambiamenti di struttura tra due temperature consecutive.
 
-    def __compute_structure_change(self, temp):
+        Args:
+            temp (int): La temperatura corrente.
+
+        Returns:
+            list: La lista dei nucleotidi che hanno cambiato struttura.
+        """
         h1 = self.THG.get_hypergraph(temp)
         h2 = self.THG.get_hypergraph(temp + 1)
         if h1 is h2:
@@ -198,12 +278,18 @@ class TemperatureFoldingStats(TemporalRnaStats):
         self, start_temp: int, end_temp: int, plot=False, plot_size: tuple = (20, 10)
     ) -> dict:
         """
-        Restituisce un dizionario che indica, per ogni nucleotide, la sua sensibilità a cambiare struttura in un range di temperature
-        :param start_temp: la temperatura iniziale
-        :param end_temp: la temperatura finale
-        :param plot: indica se fare il grafico della conduttanza
-        :param plot_size: se viene richiesto il grafico, definisce la sua grandezza
+        Restituisce un dizionario che indica, per ogni nucleotide, la sua sensibilità a cambiare struttura in un range di temperature.
+
+        Args:
+            start_temp (int): La temperatura iniziale.
+            end_temp (int): La temperatura finale.
+            plot (bool): Indica se fare il grafico della sensibilità.
+            plot_size (tuple): Se viene richiesto il grafico, definisce la sua grandezza.
+
+        Returns:
+            dict: Il dizionario delle sensibilità dei nucleotidi ai cambiamenti di temperatura.
         """
+
         self.THG.insert_temperature_range(start_temp, end_temp)
         counts = defaultdict(int)
         for temp in range(start_temp + 1, end_temp):
@@ -223,10 +309,15 @@ class TemperatureFoldingStats(TemporalRnaStats):
 
     def get_structure_differences(self, start_temp, end_temp, plot=False):
         """
-        Restituisce un dizionario contenente il numero di strutture create o rimosse in un range di temperature dalla
-        temperatura di partenza
-        :param start_temp: la temperatura iniziale
-        :param end_temp: la temperatura finale
+        Restituisce un dizionario contenente il numero di strutture create o rimosse in un range di temperature dalla temperatura di partenza.
+
+        Args:
+            start_temp (int): La temperatura iniziale.
+            end_temp (int): La temperatura finale.
+            plot (bool): Indica se fare il grafico delle differenze strutturali.
+
+        Returns:
+            dict: Il dizionario delle differenze strutturali.
         """
         self.THG.insert_temperature_range(start_temp, end_temp)
         diffs = {}
@@ -241,7 +332,18 @@ class TemperatureFoldingStats(TemporalRnaStats):
             self.__plotter.plot_structure_differences(diffs)
         return diffs
 
-    def get_connection_differences(self, start_temp, end_temp, plot=False):
+    def get_connection_differences(self, start_temp, end_temp, plot=False) -> dict:
+        """
+        Restituisce le differenze di connessione nucleotide-nucleotide in un range di temperature.
+
+        Args:
+            start_temp (int): La temperatura iniziale.
+            end_temp (int): La temperatura finale.
+            plot (bool): Indica se fare il grafico delle differenze di connessione.
+
+        Returns:
+            dict: Il dizionario delle differenze di connessione.
+        """
         self.THG.insert_temperature_range(start_temp, end_temp)
         diffs = {}
         h1 = self.THG.get_hypergraph(start_temp)
@@ -255,7 +357,21 @@ class TemperatureFoldingStats(TemporalRnaStats):
             self.__plotter.plot_connection_differences(diffs)
         return diffs
 
-    def get_nucleotide_sensibility_to_change_connection(self, start_temp: int, end_temp: int, plot=False, plot_size: tuple = (20, 10)):
+    def get_nucleotide_sensibility_to_change_connection(
+        self, start_temp: int, end_temp: int, plot=False, plot_size: tuple = (20, 10)
+    ) -> dict:
+        """
+        Restituisce un dizionario che indica, per ogni nucleotide, la sua sensibilità a cambiare connessione in un range di temperature.
+
+        Args:
+            start_temp (int): La temperatura iniziale.
+            end_temp (int): La temperatura finale.
+            plot (bool): Indica se fare il grafico della sensibilità.
+            plot_size (tuple): Se viene richiesto il grafico, definisce la sua grandezza.
+
+        Returns:
+            dict: Il dizionario delle sensibilità dei nucleotidi ai cambiamenti di connessione.
+        """
         diffs = self.get_connection_differences(start_temp, end_temp)
         count = defaultdict(int)
         for conn in diffs.values():
@@ -268,10 +384,15 @@ class TemperatureFoldingStats(TemporalRnaStats):
 
 
 class RnaStatsPlotter:
+    """Classe che fornisce metodi per disegnare grafici relativi agli ipergrafi dell'RNA."""
+
     def plot_hypergraph(self, HG: hnx.Hypergraph, size) -> None:
         """
-        Disegna un grafico che rappresenta l'ipergrafo costruito
-        :param HG: l'ipergrafo da disegnare
+        Disegna un grafico che rappresenta l'ipergrafo costruito.
+
+        Args:
+            HG (hnx.Hypergraph): L'ipergrafo da disegnare.
+            size (tuple): La dimensione del grafico.
         """
         if len(HG.nodes) > 250:
             plt.subplots(figsize=size)
@@ -283,12 +404,24 @@ class RnaStatsPlotter:
             hnx.draw(HG, **{"layout_kwargs": {"seed": 39}})
             plt.show()
 
-    def plot_structures(self, structures):
+    def plot_structures(self, structures: dict) -> None:
+        """
+        Disegna un grafico che rappresenta le strutture secondarie dell'RNA.
+
+        Args:
+            structures (dict): Il dizionario delle strutture secondarie.
+        """
         HG = hnx.Hypergraph(structures)
         hnx.draw(HG)
 
     def plot_partitions_conductance(self, conductances, size=(20, 10)) -> None:
-        """Disegna un grafico che rappresenta la conduttanza delle partizioni"""
+        """
+        Disegna un grafico che rappresenta la conduttanza delle partizioni.
+
+        Args:
+            conductances (list[float]): La lista delle conduttanze delle partizioni.
+            size (tuple): La dimensione del grafico.
+        """
         plt.subplots(figsize=size)
         seq = []
         values = []
@@ -305,8 +438,13 @@ class RnaStatsPlotter:
         self, centrality, edges, s: int = 1, size=(20, 10)
     ) -> None:
         """
-        Disegna un grafico che rappresenta la n-between-centrality dei nucleotidi
-        :param s: connectedness requirement
+        Disegna un grafico che rappresenta la n-between-centrality dei nucleotidi.
+
+        Args:
+            centrality (dict): Il dizionario delle centralità.
+            edges (bool): Indica se considerare anche gli archi.
+            s (int): Requisito di connessione.
+            size (tuple): La dimensione del grafico.
         """
         plt.subplots(figsize=size)
         if edges:
@@ -323,7 +461,16 @@ class RnaStatsPlotter:
         plt.show()
 
 
-def get_changed_connections(diffs):
+def get_changed_connections(diffs: dict) -> tuple[list, list]:
+    """
+    Restituisce le connessioni cambiate tra due ipergrafi.
+
+    Args:
+        diffs (dict): Il dizionario delle differenze di connessione.
+
+    Returns:
+        tuple[list, list]: Due liste che rappresentano le connessioni vecchie e nuove.
+    """
     changes = defaultdict(dict)
     for temp, conn in diffs.items():
         new = conn[1]
@@ -340,7 +487,17 @@ def get_changed_connections(diffs):
     return new, old
 
 
-def get_created_connections(diffs):
+def get_created_connections(diffs: dict) -> set:
+    """
+    Restituisce le connessioni create tra due ipergrafi.
+
+    Args:
+        diffs (dict): Il dizionario delle differenze di connessione.
+
+    Returns:
+        set: L'insieme delle connessioni create.
+    """
+
     created_connections = defaultdict(list)
     for temp, conn in diffs.items():
         for new in conn[1]:
@@ -350,7 +507,16 @@ def get_created_connections(diffs):
     return created
 
 
-def get_deleted_connections(diffs):
+def get_deleted_connections(diffs: dict) -> set:
+    """
+    Restituisce le connessioni eliminate tra due ipergrafi.
+
+    Args:
+        diffs (dict): Il dizionario delle differenze di connessione.
+
+    Returns:
+        set: L'insieme delle connessioni eliminate.
+    """
     deleted_connections = defaultdict(list)
     for temp, conn in diffs.items():
         for old in conn[0]:
@@ -361,7 +527,18 @@ def get_deleted_connections(diffs):
 
 
 class TemperatureFoldingStatsPlotter:
-    def plot_nucleotide_sensibility_to_changes(self, sensibilities, size=(20, 10)):
+    """Classe che fornisce metodi per disegnare grafici relativi alle statistiche di folding dell'RNA a diverse temperature."""
+
+    def plot_nucleotide_sensibility_to_changes(
+        self, sensibilities: dict, size: tuple = (20, 10)
+    ) -> None:
+        """
+        Disegna un grafico che rappresenta la sensibilità dei nucleotidi ai cambiamenti di struttura.
+
+        Args:
+            sensibilities (dict): Il dizionario delle sensibilità dei nucleotidi.
+            size (tuple): La dimensione del grafico.
+        """
         ordered_keys = sorted(sensibilities.keys())
         ordered_values = [sensibilities[key] for key in ordered_keys]
         seq = list(ordered_keys)
@@ -373,7 +550,13 @@ class TemperatureFoldingStatsPlotter:
         plt.ylabel("Sensibility score")
         plt.show()
 
-    def plot_structure_differences(self, diffs):
+    def plot_structure_differences(self, diffs: dict) -> None:
+        """
+        Disegna un grafico che rappresenta le differenze strutturali tra diverse temperature.
+
+        Args:
+            diffs (dict): Il dizionario delle differenze strutturali.
+        """
         negatives, positives, structures = self.__compute_number_of_structures(diffs)
         fig = plt.figure()
         ax = plt.subplot(111)
@@ -384,7 +567,16 @@ class TemperatureFoldingStatsPlotter:
         plt.ylabel("Structures added/removed")
         fig.show()
 
-    def __compute_number_of_structures(self, diffs):
+    def __compute_number_of_structures(self, diffs: dict) -> tuple:
+        """
+        Calcola il numero medio di strutture aggiunte e rimosse.
+
+        Args:
+            diffs (dict): Il dizionario delle differenze strutturali.
+
+        Returns:
+            tuple: Tre liste contenenti le strutture rimosse, aggiunte e i nomi delle strutture.
+        """
         positives = defaultdict(list)
         negatives = defaultdict(list)
         for dic in diffs.values():
@@ -402,7 +594,14 @@ class TemperatureFoldingStatsPlotter:
         }.values()
         return negatives, positives, structures
 
-    def plot_connection_differences(self, diffs):
+    def plot_connection_differences(self, diffs: dict) -> None:
+        """
+        Disegna un grafico che rappresenta le differenze di connessione tra diverse temperature.
+
+        Args:
+            diffs (dict): Il dizionario delle differenze di connessione.
+        """
+
         def draw_arrow(plt, arr_start, arr_end):
             dx = arr_end[0] - arr_start[0]
             dy = arr_end[1] - arr_start[1]
@@ -429,7 +628,14 @@ class TemperatureFoldingStatsPlotter:
         plt.ylabel("Number of changes")
         plt.show()
 
-    def __plot_changed_connections(self, diffs, draw_arrow):
+    def __plot_changed_connections(self, diffs: dict, draw_arrow) -> None:
+        """
+        Disegna le connessioni cambiate tra diverse temperature.
+
+        Args:
+            diffs (dict): Il dizionario delle differenze di connessione.
+            draw_arrow (function): La funzione per disegnare le frecce.
+        """
         new, old = get_changed_connections(diffs)
         for i in range(len(new)):
             draw_arrow(plt, old[i], new[i])
@@ -437,17 +643,40 @@ class TemperatureFoldingStatsPlotter:
             plt.scatter(*zip(*old), edgecolors="b")
             plt.scatter(*zip(*new), edgecolors="r")
 
-    def __plot_created_connections(self, diffs, draw_cross):
+    def __plot_created_connections(self, diffs: dict, draw_cross) -> None:
+        """
+        Disegna le connessioni create tra diverse temperature.
+
+        Args:
+            diffs (dict): Il dizionario delle differenze di connessione.
+            draw_cross (function): La funzione per disegnare le croci.
+        """
         created = get_created_connections(diffs)
         for point in created:
             draw_cross(plt, point, "blue")
 
-    def __plot_deleted_connections(self, diffs, draw_cross):
+    def __plot_deleted_connections(self, diffs: dict, draw_cross) -> None:
+        """
+        Disegna le connessioni eliminate tra diverse temperature.
+
+        Args:
+            diffs (dict): Il dizionario delle differenze di connessione.
+            draw_cross (function): La funzione per disegnare le croci.
+        """
         deleted = get_deleted_connections(diffs)
         for point in deleted:
             draw_cross(plt, point, "red")
 
-    def plot_sensibility_to_change_connection(self, count, size=(20, 10)):
+    def plot_sensibility_to_change_connection(
+        self, count: dict, size: tuple = (20, 10)
+    ) -> None:
+        """
+        Disegna un grafico che rappresenta la sensibilità dei nucleotidi ai cambiamenti di connessione.
+
+        Args:
+            count (dict): Il dizionario delle sensibilità dei nucleotidi.
+            size (tuple): La dimensione del grafico.
+        """
         count = dict(sorted(count.items()))
         seq = list(count.keys())
         sens = list(count.values())
@@ -458,4 +687,3 @@ class TemperatureFoldingStatsPlotter:
         plt.ylabel("Sensibility score")
         plt.show()
         pass
-
